@@ -146,6 +146,26 @@ BEGIN
 			shiftEvents.BeginTime
 		FROM @terminatedEquipmentEvents equipmentEvents
 		CROSS JOIN @insertedShiftEvents shiftEvents
+
+	    -- INSERT new EquipmentEvents where EquipmentEventId is NULL
+		INSERT INTO oee.EquipmentEvents (
+			EquipmentId,
+			StateEventId,
+			JobEventId,
+			ShiftEventId,
+			PerformanceEventId,
+			BeginTime
+		)
+		SELECT
+			E.EquipmentId,
+			NULL,
+			NULL,
+			shiftEvents.ShiftEventId,
+			NULL,
+			@timestamp
+		FROM @equipment E
+		CROSS JOIN @insertedShiftEvents shiftEvents
+	    WHERE E.EquipmentEventId IS NULL
 	END
 END
 go

@@ -13,7 +13,7 @@ BEGIN
 	INNER JOIN oee.StateClasses SC on SC.Id = Equipment.StateClassId
 	INNER JOIN oee.States S on SC.Id = S.StateClassId
 	WHERE Equipment.Id = @equipmentId
-	AND S.Name = @stateValue
+	AND S.Value = @stateValue
 
 	RETURN @id
 END
