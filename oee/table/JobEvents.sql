@@ -5,9 +5,11 @@ create table oee.JobEvents
 	JobId int not null,
 	BeginTime datetime not null,
 	EndTime datetime,
-	constraint PK_EquipmentJobEvents
+	constraint JobEvents_pk
 		primary key (Id),
-	constraint FK_EquipmentJobEvents_Jobs
+	constraint JobEvents_pk_2
+		unique (EquipmentId, BeginTime),
+	constraint JobEvents_Jobs_Id_fk
 		foreign key (JobId) references oee.Jobs
 )
 go
