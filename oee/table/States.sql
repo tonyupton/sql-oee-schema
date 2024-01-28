@@ -1,19 +1,21 @@
 create table oee.States
 (
 	Id int identity,
-	EquipmentId int not null,
+	StateClassId int not null,
 	Name varchar(50) not null,
 	Value int not null,
-	Running bit not null,
-	AtSpeed bit not null,
-	GoodQuality bit not null,
+	Running bit,
+	Slow bit not null,
+	Waste bit not null,
 	Recordable bit not null,
-	constraint PK_EquipmentStates
+	constraint States_pk
 		primary key (Id),
-	constraint UK_EquipmentState_EquipmentId_Name
-		unique (EquipmentId, Name),
-	constraint FK_EquipmentStates_Equipment
-		foreign key (EquipmentId) references oee.Equipment
+	constraint States_pk_2
+		unique (StateClassId, Name),
+	constraint States_pk_3
+		unique (StateClassId, Value),
+	constraint States_StateClasses_Id_fk
+		foreign key (StateClassId) references oee.StateClasses
 )
 go
 

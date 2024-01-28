@@ -2,10 +2,10 @@ create table oee.ShiftSchedules
 (
 	Id int identity,
 	Name varchar(50) not null,
-	constraint PK_ShiftSchedules
+	constraint ShiftSchedules_pk
 		primary key (Id),
-	constraint UK_ShiftSchedules_Name
-		unique (Id)
+	constraint ShiftSchedules_pk_2
+		unique (Name)
 )
 go
 

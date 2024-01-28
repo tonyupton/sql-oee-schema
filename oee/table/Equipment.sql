@@ -7,10 +7,13 @@ create table oee.Equipment
 	Cell varchar(50),
 	Description varchar(255),
 	ShiftScheduleId int,
-	constraint PK_Equipment
+	StateClassId int,
+	constraint Equipment_pk
 		primary key (Id),
-	constraint UK_Equipment_Path
-		unique (Site, Area, Line, Cell)
+	constraint Equipment_pk_2
+		unique (Site, Area, Line, Cell),
+	constraint Equipment_StateClasses_Id_fk
+		foreign key (StateClassId) references oee.StateClasses
 )
 go
 
