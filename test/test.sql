@@ -5,8 +5,8 @@ DECLARE @equipmentId int = oee.fn_FindEquipmentByPath ('Site/Area/Line 1')
 DECLARE @stateId int = oee.fn_FindEquipmentStateByValue (@equipmentId, 0)
 DECLARE @jobId int
 EXECUTE oee.usp_FindOrCreateJobByReference '1000002', @jobId OUTPUT
-EXECUTE oee.usp_InsertJobEvent @equipmentId, @jobId
--- SELECT * FROM oee.Jobs
+EXECUTE oee.usp_StartJobEvent @equipmentId, @jobId
+SELECT * FROM oee.Jobs
 SELECT * FROM oee.JobEvents
 
 /*
