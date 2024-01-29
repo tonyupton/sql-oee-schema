@@ -1,4 +1,4 @@
-CREATE PROCEDURE [oee].[usp_InsertJobEvent] (
+ALTER PROCEDURE [oee].[usp_InsertJobEvent] (
 	@equipmentId int,
 	@jobId int,
 	@beginTime datetime = NULL
@@ -103,5 +103,5 @@ BEGIN
     )
 
 END
-go
 
+GO

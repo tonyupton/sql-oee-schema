@@ -1,2 +1,1 @@
-insert into oee.StateClasses (Id, Name)
-values  (1, N'Machine');
+INSERT INTO oee.StateClasses (Name) VALUES (N'Machine');
