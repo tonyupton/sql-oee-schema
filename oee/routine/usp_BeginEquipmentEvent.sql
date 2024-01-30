@@ -1,7 +1,7 @@
-CREATE PROCEDURE [oee].[usp_StartEquipmentEvent] (
+CREATE PROCEDURE [oee].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
 	@beginTime datetime = NULL,
-    @newEventId int OUTPUT
+    @eventId int = NULL OUTPUT
 )
 AS
 BEGIN
@@ -17,7 +17,7 @@ BEGIN
 
     IF @lastEventTime = @beginTime
     BEGIN
-        SET @newEventId = @lastEventId
+        SET @eventId = @lastEventId
         RETURN
     END
 
@@ -41,7 +41,7 @@ BEGIN
 	WHERE EquipmentId = @equipmentId
     AND Id = @lastEventId
 
-    SET @newEventId = SCOPE_IDENTITY()
+    SET @eventId = SCOPE_IDENTITY()
 END
 go
 

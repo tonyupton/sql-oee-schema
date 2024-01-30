@@ -1,43 +1,45 @@
-CREATE PROCEDURE [oee].[usp_InsertStateEvent] (
+CREATE PROCEDURE [oee].[usp_BeginStateEvent] (
 	@equipmentId int,
 	@stateId int,
-	@timestamp datetime = NULL
+	@beginTime datetime = NULL,
+    @stateEventId int = NULL OUTPUT,
+    @equipmentEventId int = NULL OUTPUT
 )
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	IF @timestamp IS NULL SET @timestamp = SYSUTCDATETIME ( )
+	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
 
-	DECLARE @currentStateEventId int,
-		@currentStateEventBeginTime datetime,
-		@currentStateEventEndTime datetime,
-		@currentStateId int
-
+    -- Find the last recorded State Event for given equipment
+	DECLARE @lastStateEventId int
+	DECLARE @lastStateId int
+	DECLARE @lastStateEventBeginTime datetime
+	DECLARE @lastStateEventEndTime datetime
 	SELECT TOP (1)
-		@currentStateEventId = Id,
-		@currentStateEventBeginTime = BeginTime,
-		@currentStateEventEndTime = EndTime,
-		@currentStateId = StateId
+		@lastStateEventId = Id,
+		@lastStateId = StateId,
+		@lastStateEventBeginTime = BeginTime,
+		@lastStateEventEndTime = EndTime
 	FROM oee.StateEvents
 	WHERE EquipmentId = @equipmentId 
-	AND BeginTime <= @timestamp
-	AND (EndTime IS NULL OR EndTime > @timestamp)
+	AND BeginTime <= @beginTime
+	AND (EndTime IS NULL OR EndTime > @beginTime)
 	ORDER BY BeginTime DESC
 
-	IF @currentStateEventBeginTime = @timestamp
+	IF @lastStateEventBeginTime = @beginTime
 	BEGIN
 		--Update StateId if BeginTime = @timestamp
 		UPDATE oee.StateEvents
 			SET StateId = @stateId
-		WHERE Id = @currentStateEventId
+		WHERE Id = @lastStateEventId
 	END
-	ELSE IF @currentStateId != @stateId OR @currentStateId IS NULL
+	ELSE IF @lastStateId != @stateId OR @lastStateId IS NULL
 	BEGIN
 		--Terminate current EquipmentStateEvent
 		UPDATE oee.StateEvents
-			SET EndTime = @timestamp
-		WHERE Id = @currentStateEventId
+			SET EndTime = @beginTime
+		WHERE Id = @lastStateEventId
 
 		--INSERT new State Event
 		INSERT INTO oee.StateEvents (
@@ -47,10 +49,10 @@ BEGIN
 		)
 		VALUES (
 			@equipmentId,
-			@timestamp,
+			@beginTime,
 			@stateId
 		)
-		DECLARE @insertedStateEventId int = SCOPE_IDENTITY ( )
+		DECLARE @insertedStateEventId int = SCOPE_IDENTITY()
 
 		--Declare table variable to hold current EquipmentEvent
 		DECLARE @currentEquipmentEvents TABLE (
@@ -76,7 +78,7 @@ BEGIN
 			events.EndTime
 		FROM oee.EquipmentEvents events
 		WHERE events.EquipmentId = @equipmentId
-		AND events.BeginTime <= @timestamp
+		AND events.BeginTime <= @beginTime
 		ORDER BY events.BeginTime DESC
 
 		DECLARE @currentEquipmentEventId int = (SELECT Id FROM @currentEquipmentEvents)
@@ -85,7 +87,7 @@ BEGIN
 		UPDATE oee.EquipmentEvents
 		SET StateEventId = @insertedStateEventId
 		FROM oee.EquipmentEvents events
-		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime = @timestamp
+		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime = @beginTime
 
 		--Declare table variable to hold terminated EquipmentEvents
 		DECLARE @terminatedEquipmentEvents TABLE (
@@ -101,7 +103,7 @@ BEGIN
 
 		-- UPDATE EndTime to terminate EquipmentEvents where BeginTime < @timestamp
 		UPDATE oee.EquipmentEvents
-		SET EndTime = @timestamp
+		SET EndTime = @beginTime
 		OUTPUT
 			inserted.EquipmentId,
 			inserted.Id,
@@ -122,7 +124,7 @@ BEGIN
 			EndTime
 		)
 		FROM oee.EquipmentEvents events
-		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime < @timestamp
+		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime < @beginTime
 
 		-- INSERT new EquipmentEvents where previous events have been terminated
 		INSERT INTO oee.EquipmentEvents (
@@ -139,8 +141,12 @@ BEGIN
 			equipmentEvents.JobEventId,
 			equipmentEvents.ShiftEventId,
 			equipmentEvents.PerformanceEventId,
-			@timestamp
+			@beginTime
 		FROM @terminatedEquipmentEvents equipmentEvents
+
+
+	    SET @stateEventId =  @insertedStateEventId
+	    SET @equipmentEventId = SCOPE_IDENTITY()
 	END
 END
 go

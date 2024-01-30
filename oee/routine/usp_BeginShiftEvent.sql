@@ -1,4 +1,4 @@
-CREATE PROCEDURE [oee].[usp_InsertShiftEvent] (
+CREATE PROCEDURE [oee].[usp_BeginShiftEvent] (
 	@shiftScheduleId int,
 	@shiftId int,
 	@timestamp datetime = NULL

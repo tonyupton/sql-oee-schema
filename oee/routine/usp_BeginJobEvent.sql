@@ -1,11 +1,14 @@
-CREATE PROCEDURE [oee].[usp_StartJobEvent] (
+CREATE PROCEDURE [oee].[usp_BeginJobEvent] (
 	@equipmentId int,
 	@jobId int,
-	@beginTime datetime = NULL
+	@beginTime datetime = NULL,
+    @jobEventId int = NULL OUTPUT
 )
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	SET @jobEventId = NULL
 
 	-- Validate parameters
 	IF @equipmentId IS NULL RETURN
@@ -40,27 +43,26 @@ BEGIN
     END
 
     -- Insert new Job Event
-	DECLARE @newJobEventId int
 	IF @lastJobId IS NULL
 	        OR ( @jobId != ISNULL(@lastJobId, -1)
 	        AND @lastJobEventBeginTime < @beginTime)
     BEGIN
         INSERT INTO oee.JobEvents (EquipmentId, JobId, BeginTime)
         VALUES (@equipmentId, @jobId, @beginTime)
-        SET @newJobEventId = SCOPE_IDENTITY()
+        SET @jobEventId = SCOPE_IDENTITY()
     END
 
     -- If no new Job Event was inserted then return
-    IF @newJobEventId IS NULL RETURN
+    IF @jobEventId IS NULL RETURN
 
 	DECLARE @newEquipmentEventId int
-	EXECUTE oee.usp_StartEquipmentEvent
+	EXECUTE oee.usp_BeginEquipmentEvent
             @equipmentId,
             @beginTime,
             @newEquipmentEventId OUTPUT
 
     UPDATE oee.EquipmentEvents
-    SET JobEventId = @newJobEventId
+    SET JobEventId = @jobEventId
     WHERE Id = @newEquipmentEventId
 
 END
