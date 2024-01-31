@@ -2,13 +2,12 @@ CREATE PROCEDURE [oee].[usp_BeginJobEvent] (
 	@equipmentId int,
 	@jobId int,
 	@beginTime datetime = NULL,
-    @jobEventId int = NULL OUTPUT
+    @jobEventId int = NULL OUTPUT,
+    @equipmentEventId int = NULL OUTPUT
 )
 AS
 BEGIN
 	SET NOCOUNT ON;
-
-	SET @jobEventId = NULL
 
 	-- Validate parameters
 	IF @equipmentId IS NULL RETURN
@@ -16,6 +15,8 @@ BEGIN
 
 	-- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME ( )
+	SET @jobEventId = NULL
+	SET @equipmentEventId = NULL
 
 	-- Find the last record for Job Events for given equipment
 	DECLARE @lastJobEventId int
@@ -32,7 +33,7 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	-- Terminate previous Job Event
-	IF @lastJobId IS NOT NULL
+	IF @lastJobEventId IS NOT NULL
             AND @jobId != ISNULL(@lastJobId, -1)
             AND @lastJobEventBeginTime < @beginTime
             AND @lastJobEventEndTime IS NULL
@@ -43,7 +44,7 @@ BEGIN
     END
 
     -- Insert new Job Event
-	IF @lastJobId IS NULL
+	IF @lastJobEventId IS NULL
 	        OR ( @jobId != ISNULL(@lastJobId, -1)
 	        AND @lastJobEventBeginTime < @beginTime)
     BEGIN
@@ -55,15 +56,16 @@ BEGIN
     -- If no new Job Event was inserted then return
     IF @jobEventId IS NULL RETURN
 
-	DECLARE @newEquipmentEventId int
+    -- Start new Equipment Event
 	EXECUTE oee.usp_BeginEquipmentEvent
             @equipmentId,
             @beginTime,
-            @newEquipmentEventId OUTPUT
+            @equipmentEventId OUTPUT
 
+	-- Set JobEventId on the new EquipmentEvent to the new JobEventID
     UPDATE oee.EquipmentEvents
     SET JobEventId = @jobEventId
-    WHERE Id = @newEquipmentEventId
+    WHERE Id = @equipmentEventId
 
 END
 go
