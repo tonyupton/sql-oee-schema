@@ -6,8 +6,7 @@ create table oee.Jobs
 		primary key (Id),
 	constraint Jobs_pk_2
 		unique (Id)
-)
-go
+);
 
 create table oee.JobEvents
 (
@@ -22,8 +21,7 @@ create table oee.JobEvents
 		unique (EquipmentId, BeginTime),
 	constraint JobEvents_Jobs_Id_fk
 		foreign key (JobId) references oee.Jobs
-)
-go
+);
 
 create table oee.ShiftSchedules
 (
@@ -33,8 +31,7 @@ create table oee.ShiftSchedules
 		primary key (Id),
 	constraint ShiftSchedules_pk_2
 		unique (Name)
-)
-go
+);
 
 create table oee.Shifts
 (
@@ -47,8 +44,7 @@ create table oee.Shifts
 		unique (ScheduleId, Name),
 	constraint Shifts_ShiftSchedules_Id_fk
 		foreign key (ScheduleId) references oee.ShiftSchedules
-)
-go
+);
 
 create table oee.ShiftEvents
 (
@@ -65,8 +61,7 @@ create table oee.ShiftEvents
 		foreign key (ShiftScheduleId) references oee.ShiftSchedules,
 	constraint ShiftEvents_Shifts_Id_fk
 		foreign key (ShiftId) references oee.Shifts
-)
-go
+);
 
 create table oee.StateClasses
 (
@@ -76,12 +71,12 @@ create table oee.StateClasses
 		primary key (Id),
 	constraint StateClasses_pk_2
 		unique (Name)
-)
-go
+);
 
 create table oee.Equipment
 (
 	Id int identity,
+	Enterprise varchar(50) not null,
 	Site varchar(50) not null,
 	Area varchar(50) not null,
 	Line varchar(50) not null,
@@ -92,11 +87,26 @@ create table oee.Equipment
 	constraint Equipment_pk
 		primary key (Id),
 	constraint Equipment_pk_2
-		unique (Site, Area, Line, Cell),
+		unique (Enterprise, Site, Area, Line, Cell),
 	constraint Equipment_StateClasses_Id_fk
 		foreign key (StateClassId) references oee.StateClasses
-)
-go
+);
+
+create table oee.Counters
+(
+	Id int identity,
+	EquipmentId int not null,
+	Name int not null,
+	Type int not null,
+	Mode int not null,
+	Value int,
+	constraint Counters_pk
+		primary key (Id),
+	constraint Counters_pk_2
+		unique (EquipmentId, Name),
+	constraint Counters_Equipment_Id_fk
+		foreign key (EquipmentId) references oee.Equipment
+);
 
 create table oee.PerformanceEvents
 (
@@ -112,8 +122,7 @@ create table oee.PerformanceEvents
 		unique (BeginTime, EquipmentId),
 	constraint PerformanceEvents_Equipment_Id_fk
 		foreign key (EquipmentId) references oee.Equipment
-)
-go
+);
 
 create table oee.States
 (
@@ -133,8 +142,7 @@ create table oee.States
 		unique (StateClassId, Value),
 	constraint States_StateClasses_Id_fk
 		foreign key (StateClassId) references oee.StateClasses
-)
-go
+);
 
 create table oee.StateReasons
 (
@@ -149,8 +157,7 @@ create table oee.StateReasons
 		unique (StateId, Category, Name),
 	constraint StateReasons_States_Id_fk
 		foreign key (StateId) references oee.States,
-)
-go
+);
 
 create table oee.StateEvents
 (
@@ -171,12 +178,11 @@ create table oee.StateEvents
 		foreign key (ReasonId) references oee.StateReasons,
 	constraint StateEvents_States_Id_fk
 		foreign key (StateId) references oee.States
-)
-go
+);
 
 create table oee.EquipmentEvents
 (
-	Id bigint identity,
+	Id int identity,
 	EquipmentId int not null,
 	StateEventId int,
 	JobEventId int,
@@ -198,8 +204,25 @@ create table oee.EquipmentEvents
 		foreign key (ShiftEventId) references oee.ShiftEvents,
 	constraint EquipmentEvents_StateEvents_Id_fk
 		foreign key (StateEventId) references oee.StateEvents
-)
-go
+);
+
+create table oee.CounterEvents
+(
+	Id int identity,
+	EquipmentEventId int not null,
+	CounterId int not null,
+	BeginValue int,
+	EndValue int,
+	DeltaValue int,
+	constraint CounterEvents_pk
+		primary key (Id),
+	constraint CounterEvents_pk_2
+		unique (EquipmentEventId, CounterId),
+	constraint CounterEvents_Counters_Id_fk
+		foreign key (CounterId) references oee.Counters,
+	constraint CounterEvents_EquipmentEvents_Id_fk
+		foreign key (EquipmentEventId) references oee.EquipmentEvents
+);
 
 CREATE FUNCTION [oee].[fn_FindEquipmentByPath] 
 (
@@ -215,8 +238,7 @@ BEGIN
 	WHERE CONCAT(e.Site,'/',e.Area,'/',e.Line) = @path
 
 	RETURN @id
-END
-go
+END;
 
 CREATE FUNCTION [oee].[fn_FindEquipmentStateByName]
 (
@@ -236,8 +258,7 @@ BEGIN
 	AND S.Name = @stateName
 
 	RETURN @id
-END
-go
+END;
 
 CREATE FUNCTION [oee].[fn_FindEquipmentStateByValue]
 (
@@ -257,8 +278,7 @@ BEGIN
 	AND S.Value = @stateValue
 
 	RETURN @id
-END
-go
+END;
 
 CREATE FUNCTION [oee].[fn_FindJobByReference] 
 (
@@ -274,8 +294,7 @@ BEGIN
 	WHERE Reference = @reference
 
 	RETURN @id
-END
-go
+END;
 
 CREATE FUNCTION [oee].[fn_FindLastEquipmentEvent]
 (
@@ -298,8 +317,76 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	RETURN @id
-END
-go
+END;
+
+CREATE FUNCTION [oee].[fn_FindLastJobEvent]
+(
+	@equipmentId int,
+    @beginTime datetime = NULL
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @id int
+
+    -- Set @beginTime to current time if NULL
+	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME ( )
+
+	SELECT TOP (1)
+        @id = Id
+	FROM JobEvents
+	WHERE EquipmentId = @equipmentId
+	AND BeginTime <= @beginTime
+	ORDER BY BeginTime DESC
+
+	RETURN @id
+END;
+
+CREATE FUNCTION [oee].[fn_FindLastShiftEvent]
+(
+	@shiftScheduleId int,
+    @beginTime datetime = NULL
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @id int
+
+    -- Set @beginTime to current time if NULL
+	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME ( )
+
+	SELECT TOP (1)
+        @id = Id
+	FROM ShiftEvents
+	WHERE ShiftScheduleId = @shiftScheduleId
+	AND BeginTime <= @beginTime
+	ORDER BY BeginTime DESC
+
+	RETURN @id
+END;
+
+CREATE FUNCTION [oee].[fn_FindLastStateEvent]
+(
+	@equipmentId int,
+    @beginTime datetime = NULL
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @id int
+
+    -- Set @beginTime to current time if NULL
+	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME ( )
+
+	SELECT TOP (1)
+        @id = Id
+	FROM StateEvents
+	WHERE EquipmentId = @equipmentId
+	AND BeginTime <= @beginTime
+	ORDER BY BeginTime DESC
+
+	RETURN @id
+END;
 
 CREATE FUNCTION [oee].[fn_FindShiftByName]
 (
@@ -316,8 +403,7 @@ BEGIN
 	WHERE ScheduleId = @scheduleId AND Name = @shiftName
 
 	RETURN @id
-END
-go
+END;
 
 CREATE FUNCTION [oee].[fn_FindShiftScheduleByName]
 (
@@ -333,8 +419,7 @@ BEGIN
 	WHERE Name = @scheduleName
 
 	RETURN @id
-END
-go
+END;
 
 CREATE PROCEDURE [oee].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
@@ -380,20 +465,18 @@ BEGIN
     AND Id = @lastEventId
 
     SET @eventId = SCOPE_IDENTITY()
-END
-go
+END;
 
 CREATE PROCEDURE [oee].[usp_BeginJobEvent] (
 	@equipmentId int,
 	@jobId int,
 	@beginTime datetime = NULL,
-    @jobEventId int = NULL OUTPUT
+    @jobEventId int = NULL OUTPUT,
+    @equipmentEventId int = NULL OUTPUT
 )
 AS
 BEGIN
 	SET NOCOUNT ON;
-
-	SET @jobEventId = NULL
 
 	-- Validate parameters
 	IF @equipmentId IS NULL RETURN
@@ -401,6 +484,8 @@ BEGIN
 
 	-- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME ( )
+	SET @jobEventId = NULL
+	SET @equipmentEventId = NULL
 
 	-- Find the last record for Job Events for given equipment
 	DECLARE @lastJobEventId int
@@ -417,7 +502,7 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	-- Terminate previous Job Event
-	IF @lastJobId IS NOT NULL
+	IF @lastJobEventId IS NOT NULL
             AND @jobId != ISNULL(@lastJobId, -1)
             AND @lastJobEventBeginTime < @beginTime
             AND @lastJobEventEndTime IS NULL
@@ -428,7 +513,7 @@ BEGIN
     END
 
     -- Insert new Job Event
-	IF @lastJobId IS NULL
+	IF @lastJobEventId IS NULL
 	        OR ( @jobId != ISNULL(@lastJobId, -1)
 	        AND @lastJobEventBeginTime < @beginTime)
     BEGIN
@@ -440,29 +525,31 @@ BEGIN
     -- If no new Job Event was inserted then return
     IF @jobEventId IS NULL RETURN
 
-	DECLARE @newEquipmentEventId int
+    -- Start new Equipment Event
 	EXECUTE oee.usp_BeginEquipmentEvent
             @equipmentId,
             @beginTime,
-            @newEquipmentEventId OUTPUT
+            @equipmentEventId OUTPUT
 
+	-- Set JobEventId on the new EquipmentEvent to the new JobEventID
     UPDATE oee.EquipmentEvents
     SET JobEventId = @jobEventId
-    WHERE Id = @newEquipmentEventId
+    WHERE Id = @equipmentEventId
 
-END
-go
+END;
 
 CREATE PROCEDURE [oee].[usp_BeginShiftEvent] (
 	@shiftScheduleId int,
 	@shiftId int,
-	@timestamp datetime = NULL
+	@beginTime datetime = NULL,
+    @shiftEventId int = NULL OUTPUT
 )
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	IF @timestamp IS NULL SET @timestamp = SYSUTCDATETIME ( )
+	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
+	SET @shiftEventId = NULL
 
 	DECLARE @currentShiftEventId int, @currentShiftId int
 
@@ -477,7 +564,7 @@ BEGIN
 	BEGIN
 
 		UPDATE oee.ShiftEvents
-			SET EndTime = @timestamp
+			SET EndTime = @beginTime
 		FROM oee.ShiftEvents events
 		WHERE events.Id = @currentShiftEventId
 
@@ -491,7 +578,9 @@ BEGIN
 		INSERT INTO oee.ShiftEvents (ShiftScheduleId, ShiftId, BeginTime)
 		OUTPUT inserted.ShiftScheduleId, inserted.Id, inserted.ShiftId, inserted.BeginTime
 		INTO @insertedShiftEvents
-		SELECT @shiftScheduleId, @shiftId, @timestamp
+		SELECT @shiftScheduleId, @shiftId, @beginTime
+
+		SET @shiftEventId = (SELECT ShiftEventId FROM @insertedShiftEvents)
 
 		DECLARE @equipment TABLE (
 			EquipmentId int,
@@ -544,7 +633,7 @@ BEGIN
 		FROM oee.EquipmentEvents events
 		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
 		CROSS JOIN @insertedShiftEvents shiftEvents
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime = @timestamp
+		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime = @beginTime
 
 		DECLARE @terminatedEquipmentEvents TABLE (
 			EquipmentEventId int,
@@ -559,7 +648,7 @@ BEGIN
 
 		-- UPDATE EndTime to terminate EquipmentEvents where BeginTime < @timestamp
 		UPDATE oee.EquipmentEvents
-		SET EndTime = @timestamp
+		SET EndTime = @beginTime
 		OUTPUT
 			inserted.EquipmentId,
 			inserted.Id,
@@ -581,7 +670,7 @@ BEGIN
 		)
 		FROM oee.EquipmentEvents events
 		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime < @timestamp
+		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime < @beginTime
 
 		-- INSERT new EquipmentEvents where previous events have been terminated
 		INSERT INTO oee.EquipmentEvents (
@@ -617,13 +706,12 @@ BEGIN
 			NULL,
 			shiftEvents.ShiftEventId,
 			NULL,
-			@timestamp
+			@beginTime
 		FROM @equipment E
 		CROSS JOIN @insertedShiftEvents shiftEvents
 	    WHERE E.EquipmentEventId IS NULL
 	END
-END
-go
+END;
 
 CREATE PROCEDURE [oee].[usp_BeginStateEvent] (
 	@equipmentId int,
@@ -636,7 +724,14 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	-- Validate parameters
+	IF @equipmentId IS NULL RETURN
+	IF @stateId IS NULL RETURN
+
+	-- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
+	SET @stateEventId = NULL
+	SET @equipmentEventId = NULL
 
     -- Find the last recorded State Event for given equipment
 	DECLARE @lastStateEventId int
@@ -649,134 +744,48 @@ BEGIN
 		@lastStateEventBeginTime = BeginTime,
 		@lastStateEventEndTime = EndTime
 	FROM oee.StateEvents
-	WHERE EquipmentId = @equipmentId 
+	WHERE EquipmentId = @equipmentId
 	AND BeginTime <= @beginTime
 	AND (EndTime IS NULL OR EndTime > @beginTime)
 	ORDER BY BeginTime DESC
 
-	IF @lastStateEventBeginTime = @beginTime
-	BEGIN
-		--Update StateId if BeginTime = @timestamp
-		UPDATE oee.StateEvents
-			SET StateId = @stateId
-		WHERE Id = @lastStateEventId
-	END
-	ELSE IF @lastStateId != @stateId OR @lastStateId IS NULL
-	BEGIN
-		--Terminate current EquipmentStateEvent
-		UPDATE oee.StateEvents
-			SET EndTime = @beginTime
-		WHERE Id = @lastStateEventId
 
-		--INSERT new State Event
-		INSERT INTO oee.StateEvents (
-			EquipmentId,
-			BeginTime,
-			StateId
-		)
-		VALUES (
-			@equipmentId,
-			@beginTime,
-			@stateId
-		)
-		DECLARE @insertedStateEventId int = SCOPE_IDENTITY()
+	-- Terminate previous State Event
+	IF @lastStateEventId IS NOT NULL
+            AND @stateId != ISNULL(@lastStateId, -1)
+            AND @lastStateEventBeginTime < @beginTime
+            AND @lastStateEventEndTime IS NULL
+    BEGIN
+        UPDATE oee.StateEvents
+        SET EndTime = @beginTime
+        WHERE Id = @lastStateEventId
+    END
 
-		--Declare table variable to hold current EquipmentEvent
-		DECLARE @currentEquipmentEvents TABLE (
-			Id int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			ShiftEventId int,
-			PerformanceEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-		--SELECT current EquipmentEvent
-		INSERT INTO @currentEquipmentEvents
-		SELECT TOP (1)
-			events.Id,
-			events.EquipmentId,
-			events.StateEventId,
-			events.JobEventId,
-			events.ShiftEventId,
-			events.PerformanceEventId,
-			events.BeginTime,
-			events.EndTime
-		FROM oee.EquipmentEvents events
-		WHERE events.EquipmentId = @equipmentId
-		AND events.BeginTime <= @beginTime
-		ORDER BY events.BeginTime DESC
-
-		DECLARE @currentEquipmentEventId int = (SELECT Id FROM @currentEquipmentEvents)
-
-		-- UPDATE StateEventId in EquipmentEvents where BeginTime = @timestamp
-		UPDATE oee.EquipmentEvents
-		SET StateEventId = @insertedStateEventId
-		FROM oee.EquipmentEvents events
-		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime = @beginTime
-
-		--Declare table variable to hold terminated EquipmentEvents
-		DECLARE @terminatedEquipmentEvents TABLE (
-			EquipmentEventId int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			PerformanceEventId int,
-			ShiftEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-
-		-- UPDATE EndTime to terminate EquipmentEvents where BeginTime < @timestamp
-		UPDATE oee.EquipmentEvents
-		SET EndTime = @beginTime
-		OUTPUT
-			inserted.EquipmentId,
-			inserted.Id,
-			inserted.StateEventId,
-			inserted.JobEventId,
-			inserted.ShiftEventId,
-			inserted.PerformanceEventId,
-			inserted.BeginTime,
-			inserted.EndTime
-		INTO @terminatedEquipmentEvents (
-			EquipmentId,
-			EquipmentEventId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime,
-			EndTime
-		)
-		FROM oee.EquipmentEvents events
-		WHERE events.Id = @currentEquipmentEventId AND events.BeginTime < @beginTime
-
-		-- INSERT new EquipmentEvents where previous events have been terminated
-		INSERT INTO oee.EquipmentEvents (
-			EquipmentId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime
-		)
-		SELECT
-			equipmentEvents.EquipmentId,
-			@insertedStateEventId,
-			equipmentEvents.JobEventId,
-			equipmentEvents.ShiftEventId,
-			equipmentEvents.PerformanceEventId,
-			@beginTime
-		FROM @terminatedEquipmentEvents equipmentEvents
+    -- Insert new State Event
+	IF @lastStateEventId IS NULL
+	        OR ( @stateId != ISNULL(@lastStateId, -1)
+	        AND @lastStateEventBeginTime < @beginTime)
+    BEGIN
+        INSERT INTO oee.StateEvents (EquipmentId, StateId, BeginTime)
+        VALUES (@equipmentId, @stateId, @beginTime)
+        SET @stateEventId = SCOPE_IDENTITY()
+    END
 
 
-	    SET @stateEventId =  @insertedStateEventId
-	    SET @equipmentEventId = SCOPE_IDENTITY()
-	END
-END
-go
+	-- If no new State Event was inserted then return
+    IF @stateEventId IS NULL RETURN
+
+	-- Start new Equipment Event
+	EXECUTE oee.usp_BeginEquipmentEvent
+            @equipmentId,
+            @beginTime,
+            @equipmentEventId OUTPUT
+
+	-- Set StateEventId on the new EquipmentEvent to the new StateEventID
+    UPDATE oee.EquipmentEvents
+    SET StateEventId = @stateEventId
+    WHERE Id = @equipmentEventId
+END;
 
 CREATE PROCEDURE [oee].[usp_FindOrCreateJobByReference] (
 	@reference varchar(50),
@@ -794,7 +803,6 @@ BEGIN
 		VALUES (@reference)
 		SET @reference = SCOPE_IDENTITY ( )
 	END
-END
-go
+END;
 
 
