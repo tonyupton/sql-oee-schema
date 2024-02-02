@@ -1,6 +1,6 @@
 create table oee.EquipmentEvents
 (
-	Id bigint identity,
+	Id int identity,
 	EquipmentId int not null,
 	StateEventId int,
 	JobEventId int,
