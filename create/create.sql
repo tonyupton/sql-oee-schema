@@ -6,7 +6,8 @@ create table oee.Jobs
 		primary key (Id),
 	constraint Jobs_pk_2
 		unique (Id)
-);
+)
+go
 
 create table oee.JobEvents
 (
@@ -21,7 +22,8 @@ create table oee.JobEvents
 		unique (EquipmentId, BeginTime),
 	constraint JobEvents_Jobs_Id_fk
 		foreign key (JobId) references oee.Jobs
-);
+)
+go
 
 create table oee.ShiftSchedules
 (
@@ -31,7 +33,8 @@ create table oee.ShiftSchedules
 		primary key (Id),
 	constraint ShiftSchedules_pk_2
 		unique (Name)
-);
+)
+go
 
 create table oee.Shifts
 (
@@ -44,7 +47,8 @@ create table oee.Shifts
 		unique (ScheduleId, Name),
 	constraint Shifts_ShiftSchedules_Id_fk
 		foreign key (ScheduleId) references oee.ShiftSchedules
-);
+)
+go
 
 create table oee.ShiftEvents
 (
@@ -61,7 +65,8 @@ create table oee.ShiftEvents
 		foreign key (ShiftScheduleId) references oee.ShiftSchedules,
 	constraint ShiftEvents_Shifts_Id_fk
 		foreign key (ShiftId) references oee.Shifts
-);
+)
+go
 
 create table oee.StateClasses
 (
@@ -71,7 +76,8 @@ create table oee.StateClasses
 		primary key (Id),
 	constraint StateClasses_pk_2
 		unique (Name)
-);
+)
+go
 
 create table oee.Equipment
 (
@@ -84,13 +90,15 @@ create table oee.Equipment
 	Description varchar(255),
 	ShiftScheduleId int,
 	StateClassId int,
+	Path varchar,
 	constraint Equipment_pk
 		primary key (Id),
 	constraint Equipment_pk_2
-		unique (Enterprise, Site, Area, Line, Cell),
+		unique (Path),
 	constraint Equipment_StateClasses_Id_fk
 		foreign key (StateClassId) references oee.StateClasses
-);
+)
+go
 
 create table oee.Counters
 (
@@ -106,7 +114,8 @@ create table oee.Counters
 		unique (EquipmentId, Name),
 	constraint Counters_Equipment_Id_fk
 		foreign key (EquipmentId) references oee.Equipment
-);
+)
+go
 
 create table oee.PerformanceEvents
 (
@@ -122,7 +131,8 @@ create table oee.PerformanceEvents
 		unique (BeginTime, EquipmentId),
 	constraint PerformanceEvents_Equipment_Id_fk
 		foreign key (EquipmentId) references oee.Equipment
-);
+)
+go
 
 create table oee.States
 (
@@ -142,7 +152,8 @@ create table oee.States
 		unique (StateClassId, Value),
 	constraint States_StateClasses_Id_fk
 		foreign key (StateClassId) references oee.StateClasses
-);
+)
+go
 
 create table oee.StateReasons
 (
@@ -157,7 +168,8 @@ create table oee.StateReasons
 		unique (StateId, Category, Name),
 	constraint StateReasons_States_Id_fk
 		foreign key (StateId) references oee.States,
-);
+)
+go
 
 create table oee.StateEvents
 (
@@ -178,7 +190,8 @@ create table oee.StateEvents
 		foreign key (ReasonId) references oee.StateReasons,
 	constraint StateEvents_States_Id_fk
 		foreign key (StateId) references oee.States
-);
+)
+go
 
 create table oee.EquipmentEvents
 (
@@ -204,7 +217,8 @@ create table oee.EquipmentEvents
 		foreign key (ShiftEventId) references oee.ShiftEvents,
 	constraint EquipmentEvents_StateEvents_Id_fk
 		foreign key (StateEventId) references oee.StateEvents
-);
+)
+go
 
 create table oee.CounterEvents
 (
@@ -222,9 +236,10 @@ create table oee.CounterEvents
 		foreign key (CounterId) references oee.Counters,
 	constraint CounterEvents_EquipmentEvents_Id_fk
 		foreign key (EquipmentEventId) references oee.EquipmentEvents
-);
+)
+go
 
-CREATE FUNCTION [oee].[fn_FindEquipmentByPath] 
+CREATE FUNCTION [oee].[fn_FindEquipmentByPath]
 (
 	@path varchar(255)
 )
@@ -235,10 +250,11 @@ BEGIN
 
 	SELECT @id = Id
 	FROM oee.Equipment e
-	WHERE CONCAT(e.Site,'/',e.Area,'/',e.Line) = @path
+	WHERE e.Path = @path
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindEquipmentStateByName]
 (
@@ -258,7 +274,8 @@ BEGIN
 	AND S.Name = @stateName
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindEquipmentStateByValue]
 (
@@ -278,7 +295,8 @@ BEGIN
 	AND S.Value = @stateValue
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindJobByReference] 
 (
@@ -294,7 +312,8 @@ BEGIN
 	WHERE Reference = @reference
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindLastEquipmentEvent]
 (
@@ -317,7 +336,8 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindLastJobEvent]
 (
@@ -340,7 +360,8 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindLastShiftEvent]
 (
@@ -363,7 +384,8 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindLastStateEvent]
 (
@@ -386,7 +408,8 @@ BEGIN
 	ORDER BY BeginTime DESC
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindShiftByName]
 (
@@ -403,7 +426,8 @@ BEGIN
 	WHERE ScheduleId = @scheduleId AND Name = @shiftName
 
 	RETURN @id
-END;
+END
+go
 
 CREATE FUNCTION [oee].[fn_FindShiftScheduleByName]
 (
@@ -419,7 +443,8 @@ BEGIN
 	WHERE Name = @scheduleName
 
 	RETURN @id
-END;
+END
+go
 
 CREATE PROCEDURE [oee].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
@@ -465,7 +490,8 @@ BEGIN
     AND Id = @lastEventId
 
     SET @eventId = SCOPE_IDENTITY()
-END;
+END
+go
 
 CREATE PROCEDURE [oee].[usp_BeginJobEvent] (
 	@equipmentId int,
@@ -536,7 +562,8 @@ BEGIN
     SET JobEventId = @jobEventId
     WHERE Id = @equipmentEventId
 
-END;
+END
+go
 
 CREATE PROCEDURE [oee].[usp_BeginShiftEvent] (
 	@shiftScheduleId int,
@@ -711,7 +738,8 @@ BEGIN
 		CROSS JOIN @insertedShiftEvents shiftEvents
 	    WHERE E.EquipmentEventId IS NULL
 	END
-END;
+END
+go
 
 CREATE PROCEDURE [oee].[usp_BeginStateEvent] (
 	@equipmentId int,
@@ -785,7 +813,8 @@ BEGIN
     UPDATE oee.EquipmentEvents
     SET StateEventId = @stateEventId
     WHERE Id = @equipmentEventId
-END;
+END
+go
 
 CREATE PROCEDURE [oee].[usp_FindOrCreateJobByReference] (
 	@reference varchar(50),
@@ -803,6 +832,7 @@ BEGIN
 		VALUES (@reference)
 		SET @reference = SCOPE_IDENTITY ( )
 	END
-END;
+END
+go
 
 

@@ -9,10 +9,11 @@ create table oee.Equipment
 	Description varchar(255),
 	ShiftScheduleId int,
 	StateClassId int,
+	Path as concat([Enterprise],'/',[Site],'/',[Area],'/',[Line],case when [Cell] IS NULL then '' else concat('/',[Cell]) end),
 	constraint Equipment_pk
 		primary key (Id),
 	constraint Equipment_pk_2
-		unique (Enterprise, Site, Area, Line, Cell),
+		unique (Path),
 	constraint Equipment_StateClasses_Id_fk
 		foreign key (StateClassId) references oee.StateClasses
 )

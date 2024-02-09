@@ -1,4 +1,4 @@
-CREATE FUNCTION [oee].[fn_FindEquipmentByPath] 
+CREATE FUNCTION [oee].[fn_FindEquipmentByPath]
 (
 	@path varchar(255)
 )
@@ -9,7 +9,7 @@ BEGIN
 
 	SELECT @id = Id
 	FROM oee.Equipment e
-	WHERE CONCAT(e.Site,'/',e.Area,'/',e.Line) = @path
+	WHERE e.Path = @path
 
 	RETURN @id
 END
