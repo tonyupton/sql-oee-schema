@@ -1,1 +1,1 @@
-INSERT INTO oee.ShiftSchedules (Name) VALUES (N'Operations');
+INSERT INTO Dev.oee.ShiftSchedules (Name) VALUES (N'Operations');

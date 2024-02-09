@@ -90,7 +90,7 @@ create table oee.Equipment
 	Description varchar(255),
 	ShiftScheduleId int,
 	StateClassId int,
-	Path varchar,
+	Path as concat([Enterprise],'/',[Site],'/',[Area],'/',[Line],case when [Cell] IS NULL then '' else concat('/',[Cell]) end),
 	constraint Equipment_pk
 		primary key (Id),
 	constraint Equipment_pk_2
@@ -815,6 +815,7 @@ BEGIN
     WHERE Id = @equipmentEventId
 END
 go
+
 
 CREATE PROCEDURE [oee].[usp_FindOrCreateJobByReference] (
 	@reference varchar(50),
