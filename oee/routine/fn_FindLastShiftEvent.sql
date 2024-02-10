@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindLastShiftEvent]
+
+CREATE FUNCTION [OEE].[fn_FindLastShiftEvent]
 (
 	@shiftScheduleId int,
     @beginTime datetime = NULL

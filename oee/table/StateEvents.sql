@@ -1,4 +1,4 @@
-create table oee.StateEvents
+create table OEE.StateEvents
 (
 	Id int identity,
 	EquipmentId int not null,
@@ -12,11 +12,11 @@ create table oee.StateEvents
 	constraint StateEvents_pk_2
 		unique (BeginTime, EquipmentId),
 	constraint StateEvents_Equipment_Id_fk
-		foreign key (EquipmentId) references oee.Equipment,
+		foreign key (EquipmentId) references OEE.Equipment,
 	constraint StateEvents_StateReasons_Id_fk
-		foreign key (ReasonId) references oee.StateReasons,
+		foreign key (ReasonId) references OEE.StateReasons,
 	constraint StateEvents_States_Id_fk
-		foreign key (StateId) references oee.States
+		foreign key (StateId) references OEE.States
 )
 go
 

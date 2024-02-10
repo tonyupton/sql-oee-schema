@@ -1,4 +1,4 @@
-create table oee.PerformanceEvents
+create table OEE.PerformanceEvents
 (
 	Id int identity,
 	EquipmentId int not null,
@@ -11,7 +11,7 @@ create table oee.PerformanceEvents
 	constraint PerformanceEvents_pk_2
 		unique (BeginTime, EquipmentId),
 	constraint PerformanceEvents_Equipment_Id_fk
-		foreign key (EquipmentId) references oee.Equipment
+		foreign key (EquipmentId) references OEE.Equipment
 )
 go
 

@@ -1,4 +1,4 @@
-create table oee.ShiftSchedules
+create table OEE.ShiftSchedules
 (
 	Id int identity,
 	Name varchar(50) not null,

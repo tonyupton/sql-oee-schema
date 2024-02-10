@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindShiftScheduleByName]
+
+CREATE FUNCTION [OEE].[fn_FindShiftScheduleByName]
 (
 	@scheduleName varchar(50)
 )
@@ -8,7 +9,7 @@ BEGIN
 	DECLARE @id int
 
 	SELECT @id = Id
-	FROM oee.ShiftSchedules
+	FROM OEE.ShiftSchedules
 	WHERE Name = @scheduleName
 
 	RETURN @id

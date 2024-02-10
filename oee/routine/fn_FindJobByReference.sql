@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindJobByReference] 
+
+CREATE FUNCTION [OEE].[fn_FindJobByReference]
 (
 	@reference varchar(50)
 )
@@ -8,7 +9,7 @@ BEGIN
 	DECLARE @id int
 
 	SELECT @id = Id
-	FROM oee.Jobs
+	FROM OEE.Jobs
 	WHERE Reference = @reference
 
 	RETURN @id

@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindEquipmentByPath]
+
+CREATE FUNCTION [OEE].[fn_FindEquipmentByPath]
 (
 	@path varchar(255)
 )
@@ -8,7 +9,7 @@ BEGIN
 	DECLARE @id int
 
 	SELECT @id = Id
-	FROM oee.Equipment e
+	FROM OEE.Equipment e
 	WHERE e.Path = @path
 
 	RETURN @id

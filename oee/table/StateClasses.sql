@@ -1,4 +1,4 @@
-create table oee.StateClasses
+create table OEE.StateClasses
 (
 	Id int identity,
 	Name varchar(50) not null,

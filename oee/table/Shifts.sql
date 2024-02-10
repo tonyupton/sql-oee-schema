@@ -1,4 +1,4 @@
-create table oee.Shifts
+create table OEE.Shifts
 (
 	Id int identity,
 	Name varchar(50) not null,
@@ -8,7 +8,7 @@ create table oee.Shifts
 	constraint Shifts_pk_2
 		unique (ScheduleId, Name),
 	constraint Shifts_ShiftSchedules_Id_fk
-		foreign key (ScheduleId) references oee.ShiftSchedules
+		foreign key (ScheduleId) references OEE.ShiftSchedules
 )
 go
 

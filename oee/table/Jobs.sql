@@ -1,4 +1,4 @@
-create table oee.Jobs
+create table OEE.Jobs
 (
 	Id int identity,
 	Reference varchar(50) not null,

@@ -1,4 +1,5 @@
-CREATE PROCEDURE [oee].[usp_BeginJobEvent] (
+
+CREATE PROCEDURE [OEE].[usp_BeginJobEvent] (
 	@equipmentId int,
 	@jobId int,
 	@beginTime datetime = NULL,
@@ -28,7 +29,7 @@ BEGIN
 	    @lastJobId = JE.JobId,
 	    @lastJobEventBeginTime = JE.BeginTime,
 	    @lastJobEventEndTime = JE.EndTime
-	FROM oee.JobEvents JE
+	FROM OEE.JobEvents JE
 	WHERE JE.EquipmentId = @equipmentId
 	ORDER BY BeginTime DESC
 
@@ -38,7 +39,7 @@ BEGIN
             AND @lastJobEventBeginTime < @beginTime
             AND @lastJobEventEndTime IS NULL
     BEGIN
-        UPDATE oee.JobEvents
+        UPDATE OEE.JobEvents
         SET EndTime = @beginTime
         WHERE Id = @lastJobEventId
     END
@@ -48,7 +49,7 @@ BEGIN
 	        OR ( @jobId != ISNULL(@lastJobId, -1)
 	        AND @lastJobEventBeginTime < @beginTime)
     BEGIN
-        INSERT INTO oee.JobEvents (EquipmentId, JobId, BeginTime)
+        INSERT INTO OEE.JobEvents (EquipmentId, JobId, BeginTime)
         VALUES (@equipmentId, @jobId, @beginTime)
         SET @jobEventId = SCOPE_IDENTITY()
     END
@@ -57,13 +58,13 @@ BEGIN
     IF @jobEventId IS NULL RETURN
 
     -- Start new Equipment Event
-	EXECUTE oee.usp_BeginEquipmentEvent
+	EXECUTE OEE.usp_BeginEquipmentEvent
             @equipmentId,
             @beginTime,
             @equipmentEventId OUTPUT
 
 	-- Set JobEventId on the new EquipmentEvent to the new JobEventID
-    UPDATE oee.EquipmentEvents
+    UPDATE OEE.EquipmentEvents
     SET JobEventId = @jobEventId
     WHERE Id = @equipmentEventId
 

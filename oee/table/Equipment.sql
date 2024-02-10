@@ -1,4 +1,4 @@
-create table oee.Equipment
+create table OEE.Equipment
 (
 	Id int identity,
 	Enterprise varchar(50) not null,
@@ -15,7 +15,7 @@ create table oee.Equipment
 	constraint Equipment_pk_2
 		unique (Path),
 	constraint Equipment_StateClasses_Id_fk
-		foreign key (StateClassId) references oee.StateClasses
+		foreign key (StateClassId) references OEE.StateClasses
 )
 go
 

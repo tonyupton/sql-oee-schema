@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindLastJobEvent]
+
+CREATE FUNCTION [OEE].[fn_FindLastJobEvent]
 (
 	@equipmentId int,
     @beginTime datetime = NULL

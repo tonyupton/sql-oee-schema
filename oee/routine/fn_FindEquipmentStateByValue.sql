@@ -1,4 +1,5 @@
-CREATE FUNCTION [oee].[fn_FindEquipmentStateByValue]
+
+CREATE FUNCTION [OEE].[fn_FindEquipmentStateByValue]
 (
 	@equipmentId int,
 	@stateValue int
@@ -9,9 +10,9 @@ BEGIN
 	DECLARE @id int
 
 	SELECT @id = S.Id
-	FROM oee.Equipment
-	INNER JOIN oee.StateClasses SC on SC.Id = Equipment.StateClassId
-	INNER JOIN oee.States S on SC.Id = S.StateClassId
+	FROM OEE.Equipment
+	INNER JOIN OEE.StateClasses SC on SC.Id = Equipment.StateClassId
+	INNER JOIN OEE.States S on SC.Id = S.StateClassId
 	WHERE Equipment.Id = @equipmentId
 	AND S.Value = @stateValue
 

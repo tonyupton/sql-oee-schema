@@ -1,17 +1,18 @@
 
-CREATE PROCEDURE [oee].[usp_FindOrCreateJobByReference] (
+
+CREATE PROCEDURE [OEE].[usp_FindOrCreateJobByReference] (
 	@reference varchar(50),
 	@id int OUTPUT
 )
 AS
 BEGIN
 	SELECT @id = Id
-	FROM oee.Jobs
+	FROM OEE.Jobs
 	WHERE Reference = @reference
 
 	IF @id IS NULL
 	BEGIN
-		INSERT INTO oee.Jobs (Reference)
+		INSERT INTO OEE.Jobs (Reference)
 		VALUES (@reference)
 		SET @reference = SCOPE_IDENTITY ( )
 	END

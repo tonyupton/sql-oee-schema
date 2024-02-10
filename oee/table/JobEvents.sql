@@ -1,4 +1,4 @@
-create table oee.JobEvents
+create table OEE.JobEvents
 (
 	Id int identity,
 	EquipmentId int not null,
@@ -10,7 +10,7 @@ create table oee.JobEvents
 	constraint JobEvents_pk_2
 		unique (EquipmentId, BeginTime),
 	constraint JobEvents_Jobs_Id_fk
-		foreign key (JobId) references oee.Jobs
+		foreign key (JobId) references OEE.Jobs
 )
 go
 

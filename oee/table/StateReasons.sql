@@ -1,4 +1,4 @@
-create table oee.StateReasons
+create table OEE.StateReasons
 (
 	Id int identity,
 	StateId int not null,
@@ -10,7 +10,7 @@ create table oee.StateReasons
 	constraint StateReasons_pk_2
 		unique (StateId, Category, Name),
 	constraint StateReasons_States_Id_fk
-		foreign key (StateId) references oee.States,
+		foreign key (StateId) references OEE.States,
 )
 go
 

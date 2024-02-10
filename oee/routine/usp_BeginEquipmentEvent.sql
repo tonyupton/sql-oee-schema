@@ -1,4 +1,5 @@
-CREATE PROCEDURE [oee].[usp_BeginEquipmentEvent] (
+
+CREATE PROCEDURE [OEE].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
 	@beginTime datetime = NULL,
     @eventId int = NULL OUTPUT
@@ -9,9 +10,9 @@ BEGIN
     -- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
 
-    DECLARE @lastEventId int = oee.fn_FindLastEquipmentEvent(@equipmentId, @beginTime)
+    DECLARE @lastEventId int = OEE.fn_FindLastEquipmentEvent(@equipmentId, @beginTime)
 
-    DECLARE @lastEventTime datetime = (SELECT BeginTime FROM oee.EquipmentEvents WHERE Id = @lastEventId)
+    DECLARE @lastEventTime datetime = (SELECT BeginTime FROM OEE.EquipmentEvents WHERE Id = @lastEventId)
 
     IF @lastEventTime > @beginTime RETURN
 
@@ -23,12 +24,12 @@ BEGIN
 
     IF @lastEventId IS NOT NULL
     BEGIN
-        UPDATE oee.EquipmentEvents
+        UPDATE OEE.EquipmentEvents
         SET EndTime = @beginTime
         WHERE Id = @lastEventId
     END
 
-    INSERT INTO oee.EquipmentEvents
+    INSERT INTO OEE.EquipmentEvents
     (EquipmentId, StateEventId, JobEventId, ShiftEventId, PerformanceEventId, BeginTime)
     SELECT TOP (1)
         @equipmentId,

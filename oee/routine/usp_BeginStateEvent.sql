@@ -1,4 +1,5 @@
-CREATE PROCEDURE [oee].[usp_BeginStateEvent] (
+
+CREATE PROCEDURE [OEE].[usp_BeginStateEvent] (
 	@equipmentId int,
 	@stateId int,
 	@beginTime datetime = NULL,
@@ -28,7 +29,7 @@ BEGIN
 		@lastStateId = StateId,
 		@lastStateEventBeginTime = BeginTime,
 		@lastStateEventEndTime = EndTime
-	FROM oee.StateEvents
+	FROM OEE.StateEvents
 	WHERE EquipmentId = @equipmentId
 	AND BeginTime <= @beginTime
 	AND (EndTime IS NULL OR EndTime > @beginTime)
@@ -41,7 +42,7 @@ BEGIN
             AND @lastStateEventBeginTime < @beginTime
             AND @lastStateEventEndTime IS NULL
     BEGIN
-        UPDATE oee.StateEvents
+        UPDATE OEE.StateEvents
         SET EndTime = @beginTime
         WHERE Id = @lastStateEventId
     END
@@ -51,7 +52,7 @@ BEGIN
 	        OR ( @stateId != ISNULL(@lastStateId, -1)
 	        AND @lastStateEventBeginTime < @beginTime)
     BEGIN
-        INSERT INTO oee.StateEvents (EquipmentId, StateId, BeginTime)
+        INSERT INTO OEE.StateEvents (EquipmentId, StateId, BeginTime)
         VALUES (@equipmentId, @stateId, @beginTime)
         SET @stateEventId = SCOPE_IDENTITY()
     END
@@ -61,13 +62,13 @@ BEGIN
     IF @stateEventId IS NULL RETURN
 
 	-- Start new Equipment Event
-	EXECUTE oee.usp_BeginEquipmentEvent
+	EXECUTE OEE.usp_BeginEquipmentEvent
             @equipmentId,
             @beginTime,
             @equipmentEventId OUTPUT
 
 	-- Set StateEventId on the new EquipmentEvent to the new StateEventID
-    UPDATE oee.EquipmentEvents
+    UPDATE OEE.EquipmentEvents
     SET StateEventId = @stateEventId
     WHERE Id = @equipmentEventId
 END

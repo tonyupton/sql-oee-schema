@@ -1,4 +1,4 @@
-create table oee.Counters
+create table OEE.Counters
 (
 	Id int identity,
 	EquipmentId int not null,
@@ -11,7 +11,7 @@ create table oee.Counters
 	constraint Counters_pk_2
 		unique (EquipmentId, Name),
 	constraint Counters_Equipment_Id_fk
-		foreign key (EquipmentId) references oee.Equipment
+		foreign key (EquipmentId) references OEE.Equipment
 )
 go
 
