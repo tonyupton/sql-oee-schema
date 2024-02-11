@@ -6,4 +6,5 @@ WORKDIR /usr/config
 # Bundle config source
 COPY /config /usr/config
 
+# Execute entrypoint.sh shell script
 ENTRYPOINT ["./entrypoint.sh"]

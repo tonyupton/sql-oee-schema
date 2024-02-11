@@ -1,3 +1,6 @@
+SET QUOTED_IDENTIFIER ON
+SET NOCOUNT ON
+
 INSERT INTO OEE.ShiftSchedules (Name) VALUES (N'Operations');
 
 INSERT INTO OEE.Shifts (Name, ScheduleId) VALUES (N'A', 1);
