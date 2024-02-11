@@ -1,13 +1,13 @@
 create table OEE.EquipmentEvents
 (
 	Id int identity,
+	BeginTime datetime not null,
+	EndTime datetime,
 	EquipmentId int not null,
 	StateEventId int,
 	JobEventId int,
 	ShiftEventId int,
 	PerformanceEventId int,
-	BeginTime datetime not null,
-	EndTime datetime,
 	constraint EquipmentEvents_pk
 		primary key (Id),
 	constraint EquipmentEvents_uk

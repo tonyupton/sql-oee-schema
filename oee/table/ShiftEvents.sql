@@ -1,10 +1,10 @@
 create table OEE.ShiftEvents
 (
 	Id int identity,
-	ShiftScheduleId int not null,
-	ShiftId int not null,
 	BeginTime datetime not null,
 	EndTime datetime,
+	ShiftScheduleId int not null,
+	ShiftId int not null,
 	constraint ShiftEvents_pk
 		primary key (Id),
 	constraint ShiftEvents_pk_2

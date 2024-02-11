@@ -1,10 +1,10 @@
 create table OEE.JobEvents
 (
 	Id int identity,
-	EquipmentId int not null,
-	JobId int not null,
 	BeginTime datetime not null,
 	EndTime datetime,
+	EquipmentId int not null,
+	JobId int not null,
 	constraint JobEvents_pk
 		primary key (Id),
 	constraint JobEvents_pk_2

@@ -1,88 +1,86 @@
-drop table if exists OEE.CounterEvents
+DROP TABLE IF EXISTS OEE.CounterEvents
 go
 
-drop table if exists OEE.Counters
+DROP TABLE IF EXISTS OEE.Counters
 go
 
-drop table if exists OEE.EquipmentEvents
+DROP TABLE IF EXISTS OEE.EquipmentEvents
 go
 
-drop table if exists OEE.JobEvents
+DROP TABLE IF EXISTS OEE.JobEvents
 go
 
-drop table if exists OEE.Jobs
+DROP TABLE IF EXISTS OEE.Jobs
 go
 
-drop table if exists OEE.PerformanceEvents
+DROP TABLE IF EXISTS OEE.PerformanceEvents
 go
 
-drop table if exists OEE.ShiftEvents
+DROP TABLE IF EXISTS OEE.ShiftEvents
 go
 
-drop table if exists OEE.Shifts
+DROP TABLE IF EXISTS OEE.Shifts
 go
 
-drop table if exists OEE.ShiftSchedules
+DROP TABLE IF EXISTS OEE.ShiftSchedules
 go
 
-drop table if exists OEE.StateEvents
+DROP TABLE IF EXISTS OEE.StateEvents
 go
 
-drop table if exists OEE.Equipment
+DROP TABLE IF EXISTS OEE.Equipment
 go
 
-drop table if exists OEE.StateReasons
+DROP TABLE IF EXISTS OEE.StateReasons
 go
 
-drop table if exists OEE.States
+DROP TABLE IF EXISTS OEE.States
 go
 
-drop table if exists OEE.StateClasses
+DROP TABLE IF EXISTS OEE.StateClasses
 go
 
-drop function if exists OEE.fn_FindEquipmentByPath
+DROP FUNCTION IF EXISTS OEE.fn_FindEquipmentByPath
 go
 
-drop function if exists OEE.fn_FindEquipmentStateByName
+DROP FUNCTION IF EXISTS OEE.fn_FindEquipmentStateByName
 go
 
-drop function if exists OEE.fn_FindEquipmentStateByValue
+DROP FUNCTION IF EXISTS OEE.fn_FindEquipmentStateByValue
 go
 
-drop function if exists OEE.fn_FindJobByReference
+DROP FUNCTION IF EXISTS OEE.fn_FindJobByReference
 go
 
-drop function if exists OEE.fn_FindLastEquipmentEvent
+DROP FUNCTION IF EXISTS OEE.fn_FindLastEquipmentEvent
 go
 
-drop function if exists OEE.fn_FindLastJobEvent
+DROP FUNCTION IF EXISTS OEE.fn_FindLastJobEvent
 go
 
-drop function if exists OEE.fn_FindLastShiftEvent
+DROP FUNCTION IF EXISTS OEE.fn_FindLastShiftEvent
 go
 
-drop function if exists OEE.fn_FindLastStateEvent
+DROP FUNCTION IF EXISTS OEE.fn_FindLastStateEvent
 go
 
-drop function if exists OEE.fn_FindShiftByName
+DROP FUNCTION IF EXISTS OEE.fn_FindShiftByName
 go
 
-drop function if exists OEE.fn_FindShiftScheduleByName
+DROP FUNCTION IF EXISTS OEE.fn_FindShiftScheduleByName
 go
 
-drop procedure if exists OEE.usp_BeginEquipmentEvent
+DROP PROCEDURE IF EXISTS OEE.usp_BeginEquipmentEvent
 go
 
-drop procedure if exists OEE.usp_BeginJobEvent
+DROP PROCEDURE IF EXISTS OEE.usp_BeginJobEvent
 go
 
-drop procedure if exists OEE.usp_BeginShiftEvent
+DROP PROCEDURE IF EXISTS OEE.usp_BeginShiftEvent
 go
 
-drop procedure if exists OEE.usp_BeginStateEvent
+DROP PROCEDURE IF EXISTS OEE.usp_BeginStateEvent
 go
 
-drop procedure if exists OEE.usp_FindOrCreateJobByReference
+DROP PROCEDURE IF EXISTS OEE.usp_FindOrCreateJobByReference
 go
-
-

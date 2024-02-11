@@ -1,9 +1,9 @@
 create table OEE.StateEvents
 (
 	Id int identity,
-	EquipmentId int not null,
 	BeginTime datetime not null,
 	EndTime datetime,
+	EquipmentId int not null,
 	StateId int,
 	ReasonId int,
 	ReasonComment varchar(2000),
