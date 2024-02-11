@@ -1,5 +1,3 @@
-
-
 CREATE PROCEDURE [OEE].[usp_BeginStateEvent] (
 	@equipmentId int,
 	@stateId int,
@@ -33,7 +31,6 @@ BEGIN
 	FROM OEE.StateEvents
 	WHERE EquipmentId = @equipmentId
 	AND BeginTime <= @beginTime
-	AND (EndTime IS NULL OR EndTime > @beginTime)
 	ORDER BY BeginTime DESC
 
 

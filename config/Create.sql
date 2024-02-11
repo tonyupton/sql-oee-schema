@@ -1,66 +1,67 @@
 SET QUOTED_IDENTIFIER ON
 
 CREATE TABLE OEE.Jobs (
-	Id int IDENTITY,
-	Reference varchar(50) NOT NULL,
-	CONSTRAINT Jobs_pk PRIMARY KEY (Id),
-	CONSTRAINT Jobs_pk_2 UNIQUE (Id)
+	Id int IDENTITY
+		CONSTRAINT Jobs_pk PRIMARY KEY
+		CONSTRAINT Jobs_pk_2 UNIQUE,
+	Reference varchar(50) NOT NULL
 )
 go
 
 CREATE TABLE OEE.JobEvents (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT JobEvents_pk PRIMARY KEY,
 	BeginTime datetime NOT NULL,
 	EndTime datetime,
 	EquipmentId int    NOT NULL,
-	JobId int          NOT NULL,
-	CONSTRAINT JobEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT JobEvents_pk_2 UNIQUE (EquipmentId, BeginTime),
-	CONSTRAINT JobEvents_Jobs_Id_fk FOREIGN KEY (JobId) REFERENCES OEE.Jobs
+	JobId int          NOT NULL
+		CONSTRAINT JobEvents_Jobs_Id_fk REFERENCES OEE.Jobs,
+	CONSTRAINT JobEvents_pk_2 UNIQUE (EquipmentId, BeginTime)
 )
 go
 
 CREATE TABLE OEE.ShiftSchedules (
-	Id int IDENTITY,
-	Name varchar(50) NOT NULL,
-	CONSTRAINT ShiftSchedules_pk PRIMARY KEY (Id),
-	CONSTRAINT ShiftSchedules_pk_2 UNIQUE (Name)
+	Id int IDENTITY
+		CONSTRAINT ShiftSchedules_pk PRIMARY KEY,
+	Name varchar(50) NOT NULL
+		CONSTRAINT ShiftSchedules_pk_2 UNIQUE
 )
 go
 
 CREATE TABLE OEE.Shifts (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT Shifts_pk PRIMARY KEY,
 	Name varchar(50) NOT NULL,
-	ScheduleId int,
-	CONSTRAINT Shifts_pk PRIMARY KEY (Id),
-	CONSTRAINT Shifts_pk_2 UNIQUE (ScheduleId, Name),
-	CONSTRAINT Shifts_ShiftSchedules_Id_fk FOREIGN KEY (ScheduleId) REFERENCES OEE.ShiftSchedules
+	ScheduleId int
+		CONSTRAINT Shifts_ShiftSchedules_Id_fk REFERENCES OEE.ShiftSchedules,
+	CONSTRAINT Shifts_pk_2 UNIQUE (ScheduleId, Name)
 )
 go
 
 CREATE TABLE OEE.ShiftEvents (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT ShiftEvents_pk PRIMARY KEY,
 	BeginTime datetime  NOT NULL,
 	EndTime datetime,
-	ShiftScheduleId int NOT NULL,
-	ShiftId int         NOT NULL,
-	CONSTRAINT ShiftEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT ShiftEvents_pk_2 UNIQUE (BeginTime, ShiftScheduleId),
-	CONSTRAINT ShiftEvents_ShiftSchedules_Id_fk FOREIGN KEY (ShiftScheduleId) REFERENCES OEE.ShiftSchedules,
-	CONSTRAINT ShiftEvents_Shifts_Id_fk FOREIGN KEY (ShiftId) REFERENCES OEE.Shifts
+	ShiftScheduleId int NOT NULL
+		CONSTRAINT ShiftEvents_ShiftSchedules_Id_fk REFERENCES OEE.ShiftSchedules,
+	ShiftId int         NOT NULL
+		CONSTRAINT ShiftEvents_Shifts_Id_fk REFERENCES OEE.Shifts,
+	CONSTRAINT ShiftEvents_pk_2 UNIQUE (BeginTime, ShiftScheduleId)
 )
 go
 
 CREATE TABLE OEE.StateClasses (
-	Id int IDENTITY,
-	Name varchar(50) NOT NULL,
-	CONSTRAINT StateClasses_pk PRIMARY KEY (Id),
-	CONSTRAINT StateClasses_pk_2 UNIQUE (Name)
+	Id int IDENTITY
+		CONSTRAINT StateClasses_pk PRIMARY KEY,
+	Name varchar(50) NOT NULL
+		CONSTRAINT StateClasses_pk_2 UNIQUE
 )
 go
 
 CREATE TABLE OEE.Equipment (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT Equipment_pk PRIMARY KEY,
 	Enterprise varchar(50) NOT NULL,
 	Site varchar(50)       NOT NULL,
 	Area varchar(50)       NOT NULL,
@@ -68,117 +69,116 @@ CREATE TABLE OEE.Equipment (
 	Cell varchar(50),
 	Description varchar(255),
 	ShiftScheduleId int,
-	StateClassId int,
-	Path AS CONCAT(Enterprise, '/', Site, '/', Area, '/', Line,
-				   CASE WHEN Cell IS NULL THEN '' ELSE CONCAT('/', Cell) END),
-	CONSTRAINT Equipment_pk PRIMARY KEY (Id),
-	CONSTRAINT Equipment_pk_2 UNIQUE (Path),
-	CONSTRAINT Equipment_StateClasses_Id_fk FOREIGN KEY (StateClassId) REFERENCES OEE.StateClasses
+	StateClassId int
+		CONSTRAINT Equipment_StateClasses_Id_fk REFERENCES OEE.StateClasses,
+	Path AS CONCAT([Enterprise], '/', [Site], '/', [Area], '/', [Line],
+				   CASE WHEN [Cell] IS NULL THEN '' ELSE CONCAT('/', [Cell]) END) CONSTRAINT Equipment_pk_2 UNIQUE
 )
 go
 
 CREATE TABLE OEE.Counters (
-	Id int IDENTITY,
-	EquipmentId int NOT NULL,
+	Id int IDENTITY
+		CONSTRAINT Counters_pk PRIMARY KEY,
+	EquipmentId int NOT NULL
+		CONSTRAINT Counters_Equipment_Id_fk REFERENCES OEE.Equipment,
 	Name int        NOT NULL,
 	Type int        NOT NULL,
 	Mode int        NOT NULL,
 	Value int,
-	CONSTRAINT Counters_pk PRIMARY KEY (Id),
-	CONSTRAINT Counters_pk_2 UNIQUE (EquipmentId, Name),
-	CONSTRAINT Counters_Equipment_Id_fk FOREIGN KEY (EquipmentId) REFERENCES OEE.Equipment
+	CONSTRAINT Counters_pk_2 UNIQUE (EquipmentId, Name)
 )
 go
 
 CREATE TABLE OEE.PerformanceEvents (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT PerformanceEvents_pk PRIMARY KEY,
 	BeginTime datetime NOT NULL,
 	EndTime datetime,
-	EquipmentId int    NOT NULL,
+	EquipmentId int    NOT NULL
+		CONSTRAINT PerformanceEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
 	IdealRate float,
 	ScheduleRate float,
-	CONSTRAINT PerformanceEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT PerformanceEvents_pk_2 UNIQUE (BeginTime, EquipmentId),
-	CONSTRAINT PerformanceEvents_Equipment_Id_fk FOREIGN KEY (EquipmentId) REFERENCES OEE.Equipment
+	CONSTRAINT PerformanceEvents_pk_2 UNIQUE (BeginTime, EquipmentId)
 )
 go
 
 CREATE TABLE OEE.States (
-	Id int IDENTITY,
-	StateClassId int NOT NULL,
+	Id int IDENTITY
+		CONSTRAINT States_pk PRIMARY KEY,
+	StateClassId int NOT NULL
+		CONSTRAINT States_StateClasses_Id_fk REFERENCES OEE.StateClasses,
 	Name varchar(50) NOT NULL,
 	Value int        NOT NULL,
 	Running bit,
 	Slow bit         NOT NULL,
 	Waste bit        NOT NULL,
 	Recordable bit   NOT NULL,
-	CONSTRAINT States_pk PRIMARY KEY (Id),
 	CONSTRAINT States_pk_2 UNIQUE (StateClassId, Name),
-	CONSTRAINT States_pk_3 UNIQUE (StateClassId, Value),
-	CONSTRAINT States_StateClasses_Id_fk FOREIGN KEY (StateClassId) REFERENCES OEE.StateClasses
+	CONSTRAINT States_pk_3 UNIQUE (StateClassId, Value)
 )
 go
 
 CREATE TABLE OEE.StateReasons (
-	Id int IDENTITY,
-	StateId int      NOT NULL,
+	Id int IDENTITY
+		CONSTRAINT StateReasons_pk PRIMARY KEY,
+	StateId int      NOT NULL
+		CONSTRAINT StateReasons_States_Id_fk REFERENCES OEE.States,
 	Name varchar(50) NOT NULL,
 	Category varchar(50),
 	Scheduled bit DEFAULT 0 NOT NULL,
-	CONSTRAINT StateReasons_pk PRIMARY KEY (Id),
-	CONSTRAINT StateReasons_pk_2 UNIQUE (StateId, Category, Name),
-	CONSTRAINT StateReasons_States_Id_fk FOREIGN KEY (StateId) REFERENCES OEE.States,
+	CONSTRAINT StateReasons_pk_2 UNIQUE (StateId, Category, Name)
 )
 go
 
 CREATE TABLE OEE.StateEvents (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT StateEvents_pk PRIMARY KEY,
 	BeginTime datetime NOT NULL,
 	EndTime datetime,
-	EquipmentId int    NOT NULL,
-	StateId int,
-	ReasonId int,
+	EquipmentId int    NOT NULL
+		CONSTRAINT StateEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
+	StateId int
+		CONSTRAINT StateEvents_States_Id_fk REFERENCES OEE.States,
+	ReasonId int
+		CONSTRAINT StateEvents_StateReasons_Id_fk REFERENCES OEE.StateReasons,
 	ReasonComment varchar(2000),
-	CONSTRAINT StateEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT StateEvents_pk_2 UNIQUE (BeginTime, EquipmentId),
-	CONSTRAINT StateEvents_Equipment_Id_fk FOREIGN KEY (EquipmentId) REFERENCES OEE.Equipment,
-	CONSTRAINT StateEvents_StateReasons_Id_fk FOREIGN KEY (ReasonId) REFERENCES OEE.StateReasons,
-	CONSTRAINT StateEvents_States_Id_fk FOREIGN KEY (StateId) REFERENCES OEE.States
+	CONSTRAINT StateEvents_pk_2 UNIQUE (BeginTime, EquipmentId)
 )
 go
 
 CREATE TABLE OEE.EquipmentEvents (
-	Id int IDENTITY,
+	Id int IDENTITY
+		CONSTRAINT EquipmentEvents_pk PRIMARY KEY,
 	BeginTime datetime NOT NULL,
 	EndTime datetime,
-	EquipmentId int    NOT NULL,
-	StateEventId int,
-	JobEventId int,
-	ShiftEventId int,
-	PerformanceEventId int,
-	CONSTRAINT EquipmentEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT EquipmentEvents_uk UNIQUE (EquipmentId, BeginTime),
-	CONSTRAINT EquipmentEvents_Equipment_Id_fk FOREIGN KEY (EquipmentId) REFERENCES OEE.Equipment,
-	CONSTRAINT EquipmentEvents_JobEvents_Id_fk FOREIGN KEY (JobEventId) REFERENCES OEE.JobEvents,
-	CONSTRAINT EquipmentEvents_PerformanceEvents_Id_fk FOREIGN KEY (PerformanceEventId) REFERENCES OEE.PerformanceEvents,
-	CONSTRAINT EquipmentEvents_ShiftEvents_Id_fk FOREIGN KEY (ShiftEventId) REFERENCES OEE.ShiftEvents,
-	CONSTRAINT EquipmentEvents_StateEvents_Id_fk FOREIGN KEY (StateEventId) REFERENCES OEE.StateEvents
+	EquipmentId int    NOT NULL
+		CONSTRAINT EquipmentEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
+	StateEventId int
+		CONSTRAINT EquipmentEvents_StateEvents_Id_fk REFERENCES OEE.StateEvents,
+	JobEventId int
+		CONSTRAINT EquipmentEvents_JobEvents_Id_fk REFERENCES OEE.JobEvents,
+	ShiftEventId int
+		CONSTRAINT EquipmentEvents_ShiftEvents_Id_fk REFERENCES OEE.ShiftEvents,
+	PerformanceEventId int
+		CONSTRAINT EquipmentEvents_PerformanceEvents_Id_fk REFERENCES OEE.PerformanceEvents,
+	CONSTRAINT EquipmentEvents_uk UNIQUE (EquipmentId, BeginTime)
 )
 go
 
 CREATE TABLE OEE.CounterEvents (
-	Id int IDENTITY,
-	EquipmentEventId int NOT NULL,
-	CounterId int        NOT NULL,
+	Id int IDENTITY
+		CONSTRAINT CounterEvents_pk PRIMARY KEY,
+	EquipmentEventId int NOT NULL
+		CONSTRAINT CounterEvents_EquipmentEvents_Id_fk REFERENCES OEE.EquipmentEvents,
+	CounterId int        NOT NULL
+		CONSTRAINT CounterEvents_Counters_Id_fk REFERENCES OEE.Counters,
 	BeginValue int,
 	EndValue int,
 	DeltaValue int,
-	CONSTRAINT CounterEvents_pk PRIMARY KEY (Id),
-	CONSTRAINT CounterEvents_pk_2 UNIQUE (EquipmentEventId, CounterId),
-	CONSTRAINT CounterEvents_Counters_Id_fk FOREIGN KEY (CounterId) REFERENCES OEE.Counters,
-	CONSTRAINT CounterEvents_EquipmentEvents_Id_fk FOREIGN KEY (EquipmentEventId) REFERENCES OEE.EquipmentEvents
+	CONSTRAINT CounterEvents_pk_2 UNIQUE (EquipmentEventId, CounterId)
 )
 go
+
 
 
 CREATE FUNCTION [OEE].[fn_FindEquipmentByPath]
@@ -197,6 +197,7 @@ BEGIN
 	RETURN @id
 END
 go
+
 
 
 CREATE FUNCTION [OEE].[fn_FindEquipmentStateByName]
@@ -221,6 +222,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindEquipmentStateByValue]
 (
 	@equipmentId int,
@@ -243,6 +245,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindJobByReference]
 (
 	@reference varchar(50)
@@ -259,6 +262,7 @@ BEGIN
 	RETURN @id
 END
 go
+
 
 
 CREATE FUNCTION [OEE].[fn_FindLastEquipmentEvent]
@@ -286,6 +290,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindLastJobEvent]
 (
 	@equipmentId int,
@@ -309,6 +314,7 @@ BEGIN
 	RETURN @id
 END
 go
+
 
 
 CREATE FUNCTION [OEE].[fn_FindLastShiftEvent]
@@ -336,6 +342,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindLastStateEvent]
 (
 	@equipmentId int,
@@ -361,6 +368,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindShiftByName]
 (
 	@scheduleId int,
@@ -380,6 +388,7 @@ END
 go
 
 
+
 CREATE FUNCTION [OEE].[fn_FindShiftScheduleByName]
 (
 	@scheduleName varchar(50)
@@ -396,6 +405,7 @@ BEGIN
 	RETURN @id
 END
 go
+
 
 CREATE PROCEDURE [OEE].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
@@ -471,6 +481,7 @@ END
 go
 
 
+
 CREATE PROCEDURE [OEE].[usp_BeginJobEvent] (
 	@equipmentId int,
 	@jobId int,
@@ -543,7 +554,6 @@ BEGIN
 END
 go
 
-
 CREATE PROCEDURE [OEE].[usp_BeginShiftEvent] (
 	@shiftScheduleId int,
 	@shiftId int,
@@ -554,172 +564,84 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	-- Validate parameters
+	IF @shiftScheduleId IS NULL RETURN
+	IF @shiftId IS NULL RETURN
+
+	-- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
 	SET @shiftEventId = NULL
 
-	DECLARE @currentShiftEventId int, @currentShiftId int
-
+	-- Find the last recorded Shift Event for given equipment
+	DECLARE @lastShiftEventId int
+	DECLARE @lastShiftId int
+	DECLARE @lastShiftEventBeginTime datetime
+	DECLARE @lastShiftEventEndTime datetime
 	SELECT TOP (1)
-		@currentShiftEventId = events.Id,
-		@currentShiftId = events.ShiftId
-	FROM OEE.ShiftEvents events
-	WHERE events.ShiftScheduleId = @shiftScheduleId
-	ORDER BY events.BeginTime DESC
+		@lastShiftEventId = Id,
+		@lastShiftId = ShiftId,
+		@lastShiftEventBeginTime = BeginTime,
+		@lastShiftEventEndTime = EndTime
+	FROM OEE.ShiftEvents
+	WHERE ShiftScheduleId = @shiftScheduleId
+	AND BeginTime <= @beginTime
+	ORDER BY BeginTime DESC
 
-	IF @currentShiftId != @shiftId OR @currentShiftId IS NULL OR @shiftId IS NULL
+	-- Terminate previous Shift Event
+	IF @lastShiftEventId IS NOT NULL
+            AND @shiftId != ISNULL(@lastShiftId, -1)
+            AND @lastShiftEventBeginTime < @beginTime
+            AND @lastShiftEventEndTime IS NULL
+    BEGIN
+        UPDATE OEE.ShiftEvents
+        SET EndTime = @beginTime
+        WHERE Id = @lastShiftEventId
+    END
+
+    -- Insert new Shift Event
+	IF @lastShiftEventId IS NULL
+	        OR (ISNULL(@shiftId, -1) != ISNULL(@lastShiftId, -1)
+	        AND @lastShiftEventBeginTime < @beginTime)
+    BEGIN
+        INSERT INTO OEE.ShiftEvents (ShiftScheduleId, ShiftId, BeginTime)
+        VALUES (@shiftScheduleId, @shiftId, @beginTime)
+        SET @shiftEventId = SCOPE_IDENTITY()
+    END
+
+    -- If no new State Event was inserted then return
+    IF @shiftEventId IS NULL RETURN
+
+	-- Select all Equipment that reference this ShiftScheduleId
+	DECLARE @cursor CURSOR
+	SET @cursor = CURSOR STATIC FOR
+		SELECT Id
+		FROM OEE.Equipment
+		WHERE ShiftScheduleId = @shiftScheduleId
+
+	OPEN @cursor
+
+	WHILE 1 = 1
 	BEGIN
+		DECLARE @equipmentId int
+		DECLARE @equipmentEventId int
 
-		UPDATE OEE.ShiftEvents
-			SET EndTime = @beginTime
-		FROM OEE.ShiftEvents events
-		WHERE events.Id = @currentShiftEventId
+		FETCH @cursor INTO @equipmentId
 
-		DECLARE @insertedShiftEvents TABLE (
-			ShiftScheduleId int,
-			ShiftEventId int,
-			ShiftId int, BeginTime
-			datetime
-		)
+		IF @@fetch_status <> 0 BREAK
 
-		INSERT INTO OEE.ShiftEvents (ShiftScheduleId, ShiftId, BeginTime)
-		OUTPUT inserted.ShiftScheduleId, inserted.Id, inserted.ShiftId, inserted.BeginTime
-		INTO @insertedShiftEvents
-		SELECT @shiftScheduleId, @shiftId, @beginTime
+		-- Start new Equipment Event
+		EXECUTE OEE.usp_BeginEquipmentEvent
+			@equipmentId,
+			@beginTime,
+			@equipmentEventId OUTPUT
 
-		SET @shiftEventId = (SELECT ShiftEventId FROM @insertedShiftEvents)
-
-		DECLARE @equipment TABLE (
-			EquipmentId int,
-			EquipmentEventId int
-		)
-
-		INSERT INTO @equipment
-		SELECT
-			equipment.Id EquipmentId,
-			(SELECT TOP(1) Id FROM OEE.EquipmentEvents WHERE EquipmentId = equipment.Id AND BeginTime < shiftEvents.BeginTime ORDER BY BeginTime DESC) EquipmentEventId
-		FROM @insertedShiftEvents shiftEvents
-		INNER JOIN OEE.Equipment equipment ON equipment.ShiftScheduleId = shiftEvents.ShiftScheduleId
-
-		DECLARE @equipmentEvents TABLE (
-			EquipmentEventId int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			PerformanceEventId int,
-			ShiftEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-
-		INSERT INTO @equipmentEvents (
-			EquipmentId,
-			EquipmentEventId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime,
-			EndTime
-		)
-		SELECT
-			equipment.EquipmentId,
-			equipment.EquipmentEventId,
-			events.StateEventId,
-			events.JobEventId,
-			events.ShiftEventId,
-			events.PerformanceEventId,
-			events.BeginTime,
-			events.EndTime
-		FROM @equipment equipment
-		LEFT JOIN OEE.EquipmentEvents events ON events.Id = equipment.EquipmentEventId
-
-		-- UPDATE ShiftEventId in EquipmentEvents where BeginTime = @timestamp
+		-- Set ShiftEventId on the new EquipmentEvent to the new ShiftEventID
 		UPDATE OEE.EquipmentEvents
-		SET ShiftEventId = shiftEvents.ShiftEventId
-		FROM OEE.EquipmentEvents events
-		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
-		CROSS JOIN @insertedShiftEvents shiftEvents
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime = @beginTime
-
-		DECLARE @terminatedEquipmentEvents TABLE (
-			EquipmentEventId int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			PerformanceEventId int,
-			ShiftEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-
-		-- UPDATE EndTime to terminate EquipmentEvents where BeginTime < @timestamp
-		UPDATE OEE.EquipmentEvents
-		SET EndTime = @beginTime
-		OUTPUT
-			inserted.EquipmentId,
-			inserted.Id,
-			inserted.StateEventId,
-			inserted.JobEventId,
-			inserted.ShiftEventId,
-			inserted.PerformanceEventId,
-			inserted.BeginTime,
-			inserted.EndTime
-		INTO @terminatedEquipmentEvents (
-			EquipmentId,
-			EquipmentEventId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime,
-			EndTime
-		)
-		FROM OEE.EquipmentEvents events
-		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime < @beginTime
-
-		-- INSERT new EquipmentEvents where previous events have been terminated
-		INSERT INTO OEE.EquipmentEvents (
-			EquipmentId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime
-		)
-		SELECT
-			equipmentEvents.EquipmentId,
-			equipmentEvents.StateEventId,
-			equipmentEvents.JobEventId,
-			shiftEvents.ShiftEventId,
-			equipmentEvents.PerformanceEventId,
-			shiftEvents.BeginTime
-		FROM @terminatedEquipmentEvents equipmentEvents
-		CROSS JOIN @insertedShiftEvents shiftEvents
-
-	    -- INSERT new EquipmentEvents where EquipmentEventId is NULL
-		INSERT INTO OEE.EquipmentEvents (
-			EquipmentId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime
-		)
-		SELECT
-			E.EquipmentId,
-			NULL,
-			NULL,
-			shiftEvents.ShiftEventId,
-			NULL,
-			@beginTime
-		FROM @equipment E
-		CROSS JOIN @insertedShiftEvents shiftEvents
-	    WHERE E.EquipmentEventId IS NULL
+		SET ShiftEventId = @shiftEventId
+		WHERE Id = @equipmentEventId
 	END
 END
 go
-
 
 CREATE PROCEDURE [OEE].[usp_BeginStateEvent] (
 	@equipmentId int,
@@ -754,7 +676,6 @@ BEGIN
 	FROM OEE.StateEvents
 	WHERE EquipmentId = @equipmentId
 	AND BeginTime <= @beginTime
-	AND (EndTime IS NULL OR EndTime > @beginTime)
 	ORDER BY BeginTime DESC
 
 
@@ -795,6 +716,7 @@ BEGIN
     WHERE Id = @equipmentEventId
 END
 go
+
 
 
 

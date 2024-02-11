@@ -1,5 +1,3 @@
-
-
 CREATE PROCEDURE [OEE].[usp_BeginShiftEvent] (
 	@shiftScheduleId int,
 	@shiftId int,
@@ -10,168 +8,81 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	-- Validate parameters
+	IF @shiftScheduleId IS NULL RETURN
+	IF @shiftId IS NULL RETURN
+
+	-- Set @beginTime to current time if NULL
 	IF @beginTime IS NULL SET @beginTime = SYSUTCDATETIME()
 	SET @shiftEventId = NULL
 
-	DECLARE @currentShiftEventId int, @currentShiftId int
-
+	-- Find the last recorded Shift Event for given equipment
+	DECLARE @lastShiftEventId int
+	DECLARE @lastShiftId int
+	DECLARE @lastShiftEventBeginTime datetime
+	DECLARE @lastShiftEventEndTime datetime
 	SELECT TOP (1)
-		@currentShiftEventId = events.Id,
-		@currentShiftId = events.ShiftId
-	FROM OEE.ShiftEvents events
-	WHERE events.ShiftScheduleId = @shiftScheduleId
-	ORDER BY events.BeginTime DESC
+		@lastShiftEventId = Id,
+		@lastShiftId = ShiftId,
+		@lastShiftEventBeginTime = BeginTime,
+		@lastShiftEventEndTime = EndTime
+	FROM OEE.ShiftEvents
+	WHERE ShiftScheduleId = @shiftScheduleId
+	AND BeginTime <= @beginTime
+	ORDER BY BeginTime DESC
 
-	IF @currentShiftId != @shiftId OR @currentShiftId IS NULL OR @shiftId IS NULL
+	-- Terminate previous Shift Event
+	IF @lastShiftEventId IS NOT NULL
+            AND @shiftId != ISNULL(@lastShiftId, -1)
+            AND @lastShiftEventBeginTime < @beginTime
+            AND @lastShiftEventEndTime IS NULL
+    BEGIN
+        UPDATE OEE.ShiftEvents
+        SET EndTime = @beginTime
+        WHERE Id = @lastShiftEventId
+    END
+
+    -- Insert new Shift Event
+	IF @lastShiftEventId IS NULL
+	        OR (ISNULL(@shiftId, -1) != ISNULL(@lastShiftId, -1)
+	        AND @lastShiftEventBeginTime < @beginTime)
+    BEGIN
+        INSERT INTO OEE.ShiftEvents (ShiftScheduleId, ShiftId, BeginTime)
+        VALUES (@shiftScheduleId, @shiftId, @beginTime)
+        SET @shiftEventId = SCOPE_IDENTITY()
+    END
+
+    -- If no new State Event was inserted then return
+    IF @shiftEventId IS NULL RETURN
+
+	-- Select all Equipment that reference this ShiftScheduleId
+	DECLARE @cursor CURSOR
+	SET @cursor = CURSOR STATIC FOR
+		SELECT Id
+		FROM OEE.Equipment
+		WHERE ShiftScheduleId = @shiftScheduleId
+
+	OPEN @cursor
+
+	WHILE 1 = 1
 	BEGIN
+		DECLARE @equipmentId int
+		DECLARE @equipmentEventId int
 
-		UPDATE OEE.ShiftEvents
-			SET EndTime = @beginTime
-		FROM OEE.ShiftEvents events
-		WHERE events.Id = @currentShiftEventId
+		FETCH @cursor INTO @equipmentId
 
-		DECLARE @insertedShiftEvents TABLE (
-			ShiftScheduleId int,
-			ShiftEventId int,
-			ShiftId int, BeginTime
-			datetime
-		)
+		IF @@fetch_status <> 0 BREAK
 
-		INSERT INTO OEE.ShiftEvents (ShiftScheduleId, ShiftId, BeginTime)
-		OUTPUT inserted.ShiftScheduleId, inserted.Id, inserted.ShiftId, inserted.BeginTime
-		INTO @insertedShiftEvents
-		SELECT @shiftScheduleId, @shiftId, @beginTime
+		-- Start new Equipment Event
+		EXECUTE OEE.usp_BeginEquipmentEvent
+			@equipmentId,
+			@beginTime,
+			@equipmentEventId OUTPUT
 
-		SET @shiftEventId = (SELECT ShiftEventId FROM @insertedShiftEvents)
-
-		DECLARE @equipment TABLE (
-			EquipmentId int,
-			EquipmentEventId int
-		)
-
-		INSERT INTO @equipment
-		SELECT
-			equipment.Id EquipmentId,
-			(SELECT TOP(1) Id FROM OEE.EquipmentEvents WHERE EquipmentId = equipment.Id AND BeginTime < shiftEvents.BeginTime ORDER BY BeginTime DESC) EquipmentEventId
-		FROM @insertedShiftEvents shiftEvents
-		INNER JOIN OEE.Equipment equipment ON equipment.ShiftScheduleId = shiftEvents.ShiftScheduleId
-
-		DECLARE @equipmentEvents TABLE (
-			EquipmentEventId int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			PerformanceEventId int,
-			ShiftEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-
-		INSERT INTO @equipmentEvents (
-			EquipmentId,
-			EquipmentEventId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime,
-			EndTime
-		)
-		SELECT
-			equipment.EquipmentId,
-			equipment.EquipmentEventId,
-			events.StateEventId,
-			events.JobEventId,
-			events.ShiftEventId,
-			events.PerformanceEventId,
-			events.BeginTime,
-			events.EndTime
-		FROM @equipment equipment
-		LEFT JOIN OEE.EquipmentEvents events ON events.Id = equipment.EquipmentEventId
-
-		-- UPDATE ShiftEventId in EquipmentEvents where BeginTime = @timestamp
+		-- Set ShiftEventId on the new EquipmentEvent to the new ShiftEventID
 		UPDATE OEE.EquipmentEvents
-		SET ShiftEventId = shiftEvents.ShiftEventId
-		FROM OEE.EquipmentEvents events
-		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
-		CROSS JOIN @insertedShiftEvents shiftEvents
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime = @beginTime
-
-		DECLARE @terminatedEquipmentEvents TABLE (
-			EquipmentEventId int,
-			EquipmentId int,
-			StateEventId int,
-			JobEventId int,
-			PerformanceEventId int,
-			ShiftEventId int,
-			BeginTime datetime,
-			EndTime datetime
-		)
-
-		-- UPDATE EndTime to terminate EquipmentEvents where BeginTime < @timestamp
-		UPDATE OEE.EquipmentEvents
-		SET EndTime = @beginTime
-		OUTPUT
-			inserted.EquipmentId,
-			inserted.Id,
-			inserted.StateEventId,
-			inserted.JobEventId,
-			inserted.ShiftEventId,
-			inserted.PerformanceEventId,
-			inserted.BeginTime,
-			inserted.EndTime
-		INTO @terminatedEquipmentEvents (
-			EquipmentId,
-			EquipmentEventId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime,
-			EndTime
-		)
-		FROM OEE.EquipmentEvents events
-		INNER JOIN @equipment equipment ON equipment.EquipmentEventId = events.Id
-		WHERE events.Id = equipment.EquipmentEventId AND events.BeginTime < @beginTime
-
-		-- INSERT new EquipmentEvents where previous events have been terminated
-		INSERT INTO OEE.EquipmentEvents (
-			EquipmentId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime
-		)
-		SELECT
-			equipmentEvents.EquipmentId,
-			equipmentEvents.StateEventId,
-			equipmentEvents.JobEventId,
-			shiftEvents.ShiftEventId,
-			equipmentEvents.PerformanceEventId,
-			shiftEvents.BeginTime
-		FROM @terminatedEquipmentEvents equipmentEvents
-		CROSS JOIN @insertedShiftEvents shiftEvents
-
-	    -- INSERT new EquipmentEvents where EquipmentEventId is NULL
-		INSERT INTO OEE.EquipmentEvents (
-			EquipmentId,
-			StateEventId,
-			JobEventId,
-			ShiftEventId,
-			PerformanceEventId,
-			BeginTime
-		)
-		SELECT
-			E.EquipmentId,
-			NULL,
-			NULL,
-			shiftEvents.ShiftEventId,
-			NULL,
-			@beginTime
-		FROM @equipment E
-		CROSS JOIN @insertedShiftEvents shiftEvents
-	    WHERE E.EquipmentEventId IS NULL
+		SET ShiftEventId = @shiftEventId
+		WHERE Id = @equipmentEventId
 	END
 END
 go
