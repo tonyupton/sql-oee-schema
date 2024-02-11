@@ -1,0 +1,11 @@
+CREATE DATABASE OEE_Database;
+GO
+
+CREATE LOGIN oee_user WITH PASSWORD = '<enterStrongPasswordHere>';
+GO
+
+USE OEE_Database;
+GO
+
+CREATE SCHEMA OEE AUTHORIZATION [dbo]
+GO

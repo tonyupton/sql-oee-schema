@@ -1,0 +1,11 @@
+services:
+  # Microsoft SQL Server 2019 Database
+  db:
+    #build: .
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - 1433:1433
