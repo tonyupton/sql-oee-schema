@@ -6,12 +6,10 @@ CREATE TABLE OEE.EquipmentEvents (
 	StateEventId int,
 	JobEventId int,
 	ShiftEventId int,
-	PerformanceEventId int,
 	CONSTRAINT EquipmentEvents_pk PRIMARY KEY (Id),
 	CONSTRAINT EquipmentEvents_uk UNIQUE (EquipmentId, BeginTime),
 	CONSTRAINT EquipmentEvents_Equipment_Id_fk FOREIGN KEY (EquipmentId) REFERENCES OEE.Equipment,
 	CONSTRAINT EquipmentEvents_JobEvents_Id_fk FOREIGN KEY (JobEventId) REFERENCES OEE.JobEvents,
-	CONSTRAINT EquipmentEvents_PerformanceEvents_Id_fk FOREIGN KEY (PerformanceEventId) REFERENCES OEE.PerformanceEvents,
 	CONSTRAINT EquipmentEvents_ShiftEvents_Id_fk FOREIGN KEY (ShiftEventId) REFERENCES OEE.ShiftEvents,
 	CONSTRAINT EquipmentEvents_StateEvents_Id_fk FOREIGN KEY (StateEventId) REFERENCES OEE.StateEvents
 )

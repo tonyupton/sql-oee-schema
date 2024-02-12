@@ -1,4 +1,3 @@
-
 CREATE PROCEDURE [OEE].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
 	@beginTime datetime = NULL,
@@ -16,7 +15,6 @@ BEGIN
         @stateEventId int,
         @jobEventId int,
         @shiftEventId int,
-        @performanceEventId int,
         @lastBeginTime datetime,
         @lastEndTime datetime;
 
@@ -26,7 +24,6 @@ BEGIN
         @stateEventId = EE.StateEventId,          -- State event associated with the equipment event
         @jobEventId = EE.JobEventId,              -- Job event associated with the equipment event
         @shiftEventId = EE.ShiftEventId,          -- Shift event associated with the equipment event
-        @performanceEventId = EE.PerformanceEventId, -- Performance event associated with the equipment event
         @lastBeginTime = EE.BeginTime,                -- Start time of the event
         @lastEndTime = EE.EndTime                     -- End time of the event
     FROM OEE.EquipmentEvents EE
@@ -55,7 +52,6 @@ BEGIN
         StateEventId,
         JobEventId,
         ShiftEventId,
-        PerformanceEventId,
         BeginTime
     )
     VALUES (
@@ -63,7 +59,6 @@ BEGIN
         @stateEventId,
         @jobEventId,
         @shiftEventId,
-        @performanceEventId,
         @beginTime
     )
 

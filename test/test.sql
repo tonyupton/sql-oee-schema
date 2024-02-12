@@ -5,13 +5,13 @@ DECLARE @stateId int = OEE.fn_FindEquipmentStateByValue (@equipmentId, 0)
 EXECUTE OEE.usp_BeginStateEvent @equipmentId, @stateId, @beginTime
 
 -- Test usp_BeginJobEvent
---DECLARE @beginTime datetime = SYSUTCDATETIME()
---DECLARE @equipmentId int = OEE.fn_FindEquipmentByPath ('Enterprise/Site/Area/Line 2')
+DECLARE @beginTime datetime = SYSUTCDATETIME()
+DECLARE @equipmentId int = OEE.fn_FindEquipmentByPath ('Enterprise/Site/Area/Line 2')
 DECLARE @jobId int, @jobEventId int
 EXECUTE OEE.usp_FindOrCreateJobByReference '1000004', @jobId OUTPUT
 EXECUTE OEE.usp_BeginJobEvent @equipmentId, @jobId, @beginTime
---SELECT * FROM OEE.Jobs
---SELECT * FROM OEE.JobEvents
+SELECT * FROM OEE.Jobs
+SELECT * FROM OEE.JobEvents
 
 -- Test usp_BeginShiftEvent
 --DECLARE @beginTime datetime = SYSUTCDATETIME()
