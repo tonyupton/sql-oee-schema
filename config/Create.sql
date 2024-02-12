@@ -20,6 +20,15 @@ CREATE TABLE OEE.JobEvents (
 )
 go
 
+CREATE TABLE OEE.OperationTypes (
+	Id int IDENTITY
+		CONSTRAINT OperationTypes_pk PRIMARY KEY,
+	Name varchar(50) NOT NULL
+		CONSTRAINT OperationTypes_pk_2 UNIQUE,
+	Scheduled bit    NOT NULL
+)
+go
+
 CREATE TABLE OEE.ShiftSchedules (
 	Id int IDENTITY
 		CONSTRAINT ShiftSchedules_pk PRIMARY KEY,
@@ -89,17 +98,24 @@ CREATE TABLE OEE.Counters (
 )
 go
 
-CREATE TABLE OEE.PerformanceEvents (
+CREATE TABLE OEE.OperationEvents (
 	Id int IDENTITY
-		CONSTRAINT PerformanceEvents_pk PRIMARY KEY,
-	BeginTime datetime NOT NULL,
+		CONSTRAINT OperationEvents_pk PRIMARY KEY,
+	BeginTime datetime  NOT NULL,
 	EndTime datetime,
-	EquipmentId int    NOT NULL
-		CONSTRAINT PerformanceEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
+	EquipmentId int     NOT NULL
+		CONSTRAINT OperationEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
+	OperationTypeId int NOT NULL
+		CONSTRAINT OperationEvents_OperationTypes_Id_fk REFERENCES OEE.OperationTypes,
+	JobId int
+		CONSTRAINT OperationEvents_Jobs_Id_fk REFERENCES OEE.Jobs,
 	IdealRate float,
-	ScheduleRate float,
-	CONSTRAINT PerformanceEvents_pk_2 UNIQUE (BeginTime, EquipmentId)
+	CONSTRAINT OperationEvents_pk_2 UNIQUE (BeginTime, EquipmentId)
 )
+go
+
+EXEC sp_addextendedproperty 'MS_Description', 'Units per Minute', 'SCHEMA', 'OEE', 'TABLE', 'OperationEvents', 'COLUMN',
+	 'IdealRate'
 go
 
 CREATE TABLE OEE.States (
@@ -153,14 +169,14 @@ CREATE TABLE OEE.EquipmentEvents (
 	EndTime datetime,
 	EquipmentId int    NOT NULL
 		CONSTRAINT EquipmentEvents_Equipment_Id_fk REFERENCES OEE.Equipment,
+	ShiftEventId int
+		CONSTRAINT EquipmentEvents_ShiftEvents_Id_fk REFERENCES OEE.ShiftEvents,
+	OperationEventId int
+		CONSTRAINT EquipmentEvents_OperationEvents_Id_fk REFERENCES OEE.OperationEvents,
 	StateEventId int
 		CONSTRAINT EquipmentEvents_StateEvents_Id_fk REFERENCES OEE.StateEvents,
 	JobEventId int
 		CONSTRAINT EquipmentEvents_JobEvents_Id_fk REFERENCES OEE.JobEvents,
-	ShiftEventId int
-		CONSTRAINT EquipmentEvents_ShiftEvents_Id_fk REFERENCES OEE.ShiftEvents,
-	PerformanceEventId int
-		CONSTRAINT EquipmentEvents_PerformanceEvents_Id_fk REFERENCES OEE.PerformanceEvents,
 	CONSTRAINT EquipmentEvents_uk UNIQUE (EquipmentId, BeginTime)
 )
 go
@@ -406,7 +422,6 @@ BEGIN
 END
 go
 
-
 CREATE PROCEDURE [OEE].[usp_BeginEquipmentEvent] (
 	@equipmentId int,
 	@beginTime datetime = NULL,
@@ -424,7 +439,6 @@ BEGIN
         @stateEventId int,
         @jobEventId int,
         @shiftEventId int,
-        @performanceEventId int,
         @lastBeginTime datetime,
         @lastEndTime datetime;
 
@@ -434,7 +448,6 @@ BEGIN
         @stateEventId = EE.StateEventId,          -- State event associated with the equipment event
         @jobEventId = EE.JobEventId,              -- Job event associated with the equipment event
         @shiftEventId = EE.ShiftEventId,          -- Shift event associated with the equipment event
-        @performanceEventId = EE.PerformanceEventId, -- Performance event associated with the equipment event
         @lastBeginTime = EE.BeginTime,                -- Start time of the event
         @lastEndTime = EE.EndTime                     -- End time of the event
     FROM OEE.EquipmentEvents EE
@@ -463,7 +476,6 @@ BEGIN
         StateEventId,
         JobEventId,
         ShiftEventId,
-        PerformanceEventId,
         BeginTime
     )
     VALUES (
@@ -471,7 +483,6 @@ BEGIN
         @stateEventId,
         @jobEventId,
         @shiftEventId,
-        @performanceEventId,
         @beginTime
     )
 
